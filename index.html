@@ -1,0 +1,1506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#04070d">
+<meta name="description" content="SMART DISTRICT TERRITORY 5D+ — Territorial Operating System: architecture overview and interactive 3D audit workbench.">
+<title>SMART DISTRICT TERRITORY™ 5D+ | Territorial OS · Architecture + Workbench</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+  }
+}
+</script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#04070d;--bg2:#071018;--panel:rgba(8,20,30,.94);--panel2:rgba(12,29,42,.94);
+  --line:rgba(74,190,255,.24);--cyan:#38bdf8;--cyan2:#8be3ff;--violet:#8b8cff;
+  --text:#e8f2ff;--muted:#a5b5ca;--green:#51e6bd;--amber:#f7c76a;--red:#ff7188;
+  --blue:#3e9fff;--shadow:0 20px 70px rgba(0,0,0,.28);
+  --rail:54px;--top:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font:16px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+a{color:inherit}button,input,select{font:inherit;color:inherit}button{cursor:pointer}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cyan2);outline-offset:3px}
+.wrap{width:min(1180px,calc(100% - 48px));margin-inline:auto}
+
+/* ===== GLOBAL NAV ===== */
+.site-nav{position:sticky;z-index:40;top:0;background:rgba(4,7,13,.9);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.nav-inner{height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:13px;font-weight:850;letter-spacing:.1em;white-space:nowrap;color:var(--cyan2);text-decoration:none}
+.brand span{color:#fff}.brand small{color:var(--violet);font-size:inherit}
+.nav-links{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.nav-links a,.nav-links button{font-size:12px;color:var(--muted);text-decoration:none;background:none;border:none;padding:6px 0;transition:color .2s}
+.nav-links a:hover,.nav-links button:hover{color:var(--cyan2)}
+.nav-cta{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;border:1px solid rgba(56,189,248,.45);background:rgba(56,189,248,.1);color:var(--cyan2)!important;font-weight:700;font-size:12px}
+.nav-cta:hover{background:rgba(56,189,248,.2)}
+.menu-toggle{display:none;background:transparent;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+
+/* ===== OVERVIEW MODE ===== */
+#overview{display:block}
+#workbench{display:none;position:fixed;inset:0;z-index:30;background:var(--bg2)}
+body.wb-mode #overview{display:none}
+body.wb-mode #workbench{display:block}
+body.wb-mode .site-nav{display:none}
+
+/* Hero */
+.hero{position:relative;isolation:isolate;min-height:620px;display:grid;align-items:center;overflow:hidden;background:
+  radial-gradient(ellipse at 76% 35%,rgba(14,116,190,.2),transparent 46%),
+  radial-gradient(ellipse at 5% 90%,rgba(99,102,241,.13),transparent 38%),
+  linear-gradient(180deg,#04070d,#071323)}
+.hero:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#04070d 0%,rgba(4,7,13,.97) 28%,rgba(4,7,13,.55) 53%,rgba(4,7,13,.08) 100%)}
+.hero-grid{display:grid;grid-template-columns:.88fr 1.12fr;gap:32px;align-items:center;padding-block:70px}
+.hero-copy{position:relative;z-index:2}
+.eyebrow,.kicker{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:var(--cyan2);font-size:11px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}
+.eyebrow:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+h1{font-size:clamp(34px,5vw,60px);line-height:1.05;letter-spacing:-.045em;font-weight:850;margin:20px 0 18px;max-width:640px}
+.gradient-text{background:linear-gradient(95deg,var(--cyan),#b0c5ff 65%,var(--violet));color:transparent;background-clip:text;-webkit-background-clip:text}
+.hero-copy .intro{max-width:560px;color:var(--muted);font-size:16px}
+.hero-copy .intro strong{color:var(--text)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:11px 18px;border-radius:11px;text-decoration:none;font-size:13px;font-weight:750;border:1px solid transparent;transition:transform .2s,border-color .2s,background .2s;cursor:pointer;background:transparent;color:inherit}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(100deg,#089bd8,#6865ee);color:white;box-shadow:0 10px 32px rgba(14,165,233,.22)}
+.btn-secondary{border-color:rgba(125,211,252,.5);color:var(--cyan2);background:rgba(4,7,13,.4)}
+.scene-shell{position:relative;min-width:0;border:1px solid rgba(91,190,255,.32);border-radius:20px;overflow:hidden;background:#061321;box-shadow:var(--shadow)}
+.scene-topline{position:absolute;z-index:3;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;gap:10px;pointer-events:none}
+.scene-label,.scene-status{font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);border-radius:7px;padding:5px 8px;background:rgba(4,10,20,.78);color:var(--cyan2)}
+.scene-status{color:var(--green)}
+#hero-scene{display:block;width:100%;height:400px}
+.scene-caption{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);background:rgba(4,10,20,.82)}
+.scene-caption strong{color:var(--cyan2);font-weight:700}
+.scene-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);background:radial-gradient(ellipse at 50% 40%,#15334d,#06101e 70%)}
+.scene-fallback b{display:block;color:var(--cyan2);font-size:18px;margin-bottom:8px}
+
+section{padding:78px 0}
+.section-alt{background:linear-gradient(180deg,rgba(10,18,32,.96),rgba(7,14,25,.98));border-block:1px solid rgba(74,190,255,.1)}
+.section-head{text-align:center;max-width:780px;margin:0 auto 38px}
+h2{font-size:clamp(26px,3.4vw,40px);line-height:1.13;letter-spacing:-.03em;margin-bottom:12px}
+.section-head p{color:var(--muted);font-size:15px;max-width:720px;margin-inline:auto}
+.dims{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.dim{position:relative;min-height:200px;padding:18px 16px;background:linear-gradient(160deg,rgba(12,27,47,.94),rgba(5,13,25,.94));border:1px solid var(--line);border-radius:14px;transition:transform .22s,border-color .22s}
+.dim:hover{transform:translateY(-4px);border-color:rgba(56,189,248,.62)}
+.dim.featured{border-color:rgba(139,140,255,.78);background:linear-gradient(160deg,rgba(43,49,106,.45),rgba(6,17,34,.96));box-shadow:0 0 30px rgba(99,102,241,.12)}
+.dim .number{font-size:28px;line-height:1;font-weight:850;letter-spacing:-.04em;color:var(--cyan);margin-bottom:12px}
+.dim.featured .number{color:#b3b4ff}
+.dim h3{font-size:13px;line-height:1.3;margin-bottom:8px}
+.dim p{font-size:12px;line-height:1.5;color:var(--muted)}
+.principle-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:42px;align-items:center}
+.principle-copy h2{text-align:left}
+.principle-copy .statement{font-size:clamp(18px,2vw,23px);font-weight:650;line-height:1.5;letter-spacing:-.015em}
+.principle-copy .statement span{color:var(--cyan2)}
+.note{margin-top:20px;padding:12px 14px;border-left:3px solid var(--violet);background:rgba(129,140,248,.07);border-radius:0 10px 10px 0;color:var(--muted);font-size:12px}
+.pyramid-panel{border:1px solid var(--line);border-radius:18px;background:radial-gradient(ellipse at 50% 65%,rgba(15,87,143,.22),transparent 64%),#06101d;padding:14px}
+.pyramid-panel svg{display:block;width:100%;height:auto}
+.cycle{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:stretch}
+.cycle-item{position:relative;padding:16px 10px 14px;text-align:center;border:1px solid var(--line);border-radius:12px;background:linear-gradient(160deg,rgba(12,27,47,.96),rgba(5,13,25,.96));min-width:0}
+.cycle-item:not(:last-child):after{content:"›";position:absolute;right:-9px;top:40%;z-index:2;color:var(--cyan2);font-size:20px;line-height:1}
+.cycle-icon{width:32px;height:32px;display:grid;place-items:center;margin:0 auto 10px;border:1px solid rgba(56,189,248,.3);border-radius:10px;color:var(--cyan2);font-size:16px}
+.cycle-item b{display:block;font-size:10px;letter-spacing:.07em;margin-bottom:6px;color:var(--cyan2)}
+.cycle-item p{font-size:11px;line-height:1.4;color:var(--muted)}
+.domains-layout{display:grid;grid-template-columns:1.5fr .85fr;gap:18px;align-items:stretch}
+.domains{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.domain{display:flex;align-items:center;gap:12px;min-height:96px;padding:15px;border:1px solid var(--line);border-radius:12px;background:rgba(10,22,39,.9)}
+.domain-icon{flex:0 0 36px;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--cyan2);font-size:18px;border:1px solid rgba(56,189,248,.26);background:rgba(56,189,248,.09)}
+.domain h3{font-size:13px;margin-bottom:2px}
+.domain p{font-size:11px;line-height:1.35;color:var(--muted)}
+.core-card{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;border:1px dashed rgba(139,140,255,.75);border-radius:14px;background:linear-gradient(150deg,rgba(99,102,241,.11),rgba(7,17,32,.75))}
+.core-symbol{font-size:34px;color:var(--violet);margin-bottom:10px}
+.core-card h3{font-size:17px;line-height:1.3;margin-bottom:8px}
+.core-card p{font-size:12px;color:var(--muted)}
+.positioning{position:relative;overflow:hidden;text-align:center;padding:52px 30px;border:1px solid rgba(139,140,255,.42);border-radius:20px;background:radial-gradient(ellipse at 12% 50%,rgba(14,165,233,.17),transparent 36%),radial-gradient(ellipse at 90% 50%,rgba(99,102,241,.17),transparent 38%),linear-gradient(135deg,#0a1428,#111a36)}
+.positioning .kicker{margin-bottom:16px}
+.positioning h2{font-size:clamp(24px,3.8vw,38px)}
+.positioning p{max-width:760px;margin:0 auto;color:var(--muted);font-size:15px}
+.positioning p strong{color:var(--text)}
+.ov-footer{padding:22px 0;border-top:1px solid var(--line);color:#74859d;font-size:11px;text-align:center}
+.ov-footer strong{color:var(--cyan2);letter-spacing:.1em}
+.smallprint{margin-top:6px;color:#617189;font-size:10px}
+
+/* ===== WORKBENCH ===== */
+#app{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,#102535 0%,#071018 70%)}
+#viewport{position:absolute;inset:var(--top) var(--rail) 0 var(--rail);overflow:hidden}
+#scene{width:100%;height:100%;display:block;touch-action:none}
+.topbar{position:absolute;z-index:10;top:0;left:0;right:0;height:var(--top);display:flex;align-items:center;gap:12px;padding:0 12px;background:rgba(5,13,20,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.topbar .brand{font-weight:800;letter-spacing:.1em;font-size:12px}.topbar .brand span{color:var(--cyan)}
+.topmeta{color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.topspacer{flex:1}
+.status{display:flex;align-items:center;gap:6px;color:var(--green);font-size:10px;text-transform:uppercase;letter-spacing:.1em}
+.dot{width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 10px var(--green)}
+.wb-btn{background:#102735;border:1px solid var(--line);border-radius:5px;padding:6px 10px;font-size:11px;color:var(--text)}
+.wb-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.wb-btn.primary{background:rgba(62,159,255,.17);border-color:#3e9fff}
+.toolrail{position:absolute;z-index:9;top:var(--top);bottom:0;width:var(--rail);display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;background:rgba(5,14,22,.96);border-color:var(--line);backdrop-filter:blur(12px)}
+.toolrail.left{left:0;border-right:1px solid var(--line)}.toolrail.right{right:0;border-left:1px solid var(--line)}
+.tool{width:40px;height:40px;display:grid;place-items:center;border:1px solid transparent;border-radius:8px;background:transparent;color:#90adbd;font-size:18px;position:relative;transition:.15s}
+.tool:hover,.tool.active{background:rgba(109,228,255,.1);border-color:rgba(109,228,255,.4);color:var(--cyan)}
+.tool.active:before{content:"";position:absolute;left:-5px;top:9px;bottom:9px;width:2px;background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+.tool[title]:hover:after{content:attr(title);position:absolute;left:46px;white-space:nowrap;background:#102534;border:1px solid var(--line);padding:5px 8px;border-radius:5px;color:var(--text);font-size:11px;z-index:20}
+.right .tool[title]:hover:after{left:auto;right:46px}
+.railspacer{flex:1}
+.panel{position:absolute;z-index:8;top:calc(var(--top) + 10px);width:260px;max-height:calc(100% - var(--top) - 20px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 50px #0008;backdrop-filter:blur(14px);display:none}
+.panel.open{display:block}
+.panel.leftpanel{left:calc(var(--rail) + 10px)}.panel.rightpanel{right:calc(var(--rail) + 10px)}
+.panelhead{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border-bottom:1px solid var(--line);font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:10px;color:var(--cyan)}
+.panelbody{padding:11px;display:grid;gap:11px}
+.field{display:grid;gap:4px}
+.field label,.smalllabel{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input[type="range"]{width:100%;accent-color:var(--cyan)}
+input[type="number"],input[type="text"],select{width:100%;background:#07141e;border:1px solid var(--line);border-radius:5px;padding:6px;color:var(--text)}
+input[type="checkbox"]{accent-color:var(--cyan)}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.scene-label-wb{position:absolute;z-index:5;pointer-events:none;left:calc(var(--rail) + 16px);top:calc(var(--top) + 12px);max-width:340px}
+.scene-label-wb .eyebrow{color:var(--cyan);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+.scene-label-wb h1{font-size:clamp(18px,1.8vw,26px);line-height:1.08;margin:6px 0 5px;letter-spacing:-.03em}
+.scene-label-wb p{color:#9db6c5;margin:0;font-size:11px;max-width:300px}
+.hud{position:absolute;z-index:5;pointer-events:none;bottom:16px;left:calc(var(--rail) + 14px);right:calc(var(--rail) + 14px);display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.hudbox{background:rgba(6,17,26,.78);border:1px solid var(--line);padding:8px 10px;border-radius:6px;backdrop-filter:blur(8px)}
+.hudlabel{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.hudvalue{font-size:12px;font-weight:700;margin-top:2px}
+.hudstats{display:flex;gap:6px}.metric{min-width:78px}
+#toast{position:absolute;z-index:20;left:50%;bottom:20px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#102b39;border:1px solid var(--cyan);padding:8px 13px;border-radius:7px;transition:.2s;font-size:12px}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#help{position:absolute;z-index:6;right:calc(var(--rail) + 14px);top:calc(var(--top) + 14px);max-width:180px;text-align:right;color:#89a7b7;font-size:10px;line-height:1.65;pointer-events:none}
+#loading{position:absolute;z-index:15;inset:var(--top) var(--rail) 0;display:grid;place-items:center;background:#071018;color:var(--cyan);letter-spacing:.14em;text-transform:uppercase;font-size:11px}
+#intro{position:absolute;z-index:7;left:50%;top:50%;transform:translate(-50%,-50%);width:min(500px,calc(100% - 130px));background:rgba(5,15,23,.95);border:1px solid var(--line);padding:18px;border-radius:12px;box-shadow:0 20px 80px #0009}
+#intro h2{margin:0 0 6px;font-size:18px}#intro p{color:#9ab4c4;line-height:1.55;font-size:13px}#intro .btnrow{margin-top:12px}
+#architecture{position:absolute;z-index:5;left:50%;top:calc(var(--top) + 12px);transform:translateX(-50%);display:flex;gap:4px;pointer-events:none;opacity:.85}
+.layerchip{font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:4px 6px;border:1px solid var(--line);background:#071822cc;border-radius:4px;color:#8da8b8}
+.layerchip.active{color:var(--cyan);border-color:var(--cyan)}
+.back-overview{background:rgba(139,140,255,.12);border-color:rgba(139,140,255,.5);color:#b3b4ff}
+.strata-list{display:grid;gap:6px}
+.strata-btn{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;text-align:left;width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:rgba(7,20,30,.85);color:var(--text);cursor:pointer;transition:.15s}
+.strata-btn:hover{border-color:rgba(109,228,255,.45);background:rgba(109,228,255,.08)}
+.strata-btn.active{border-color:var(--cyan);background:rgba(56,189,248,.12);box-shadow:0 0 0 1px rgba(56,189,248,.25)}
+.strata-btn .si{font-size:16px;opacity:.9}
+.strata-btn .sn{font-size:11px;font-weight:700;letter-spacing:.04em}
+.strata-btn .sd{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.35}
+.strata-alt{font-size:9px;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+#strataStack{position:absolute;z-index:5;left:calc(var(--rail) + 14px);bottom:78px;display:flex;flex-direction:column-reverse;gap:3px;pointer-events:none;opacity:.9}
+.strata-chip{font-size:8px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border:1px solid var(--line);background:#071822dd;border-radius:3px;color:#6a8494;white-space:nowrap}
+.strata-chip.current{color:var(--cyan);border-color:var(--cyan);background:rgba(56,189,248,.12);font-weight:700}
+
+@media(max-width:1000px){
+  .hero-grid{grid-template-columns:1fr;gap:28px;padding-block:48px}
+  .hero:after{background:linear-gradient(180deg,rgba(4,7,13,.96),rgba(4,7,13,.56) 65%,rgba(4,7,13,.2))}
+  #hero-scene{height:340px}
+  .dims{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cycle{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .cycle-item:nth-child(4):after{display:none}
+  .domains-layout{grid-template-columns:1fr}
+  .principle-grid{grid-template-columns:1fr;gap:24px}
+}
+@media(max-width:760px){
+  .wrap{width:min(100% - 28px,1180px)}
+  .nav-inner{height:56px}
+  .brand{font-size:11px;letter-spacing:.06em}
+  .menu-toggle{display:inline-flex}
+  .nav-links{display:none;position:absolute;top:55px;left:0;right:0;padding:14px 20px 18px;background:rgba(4,7,13,.97);border-bottom:1px solid var(--line);flex-direction:column;align-items:flex-start;gap:12px}
+  .nav-links.open{display:flex}
+  h1{font-size:clamp(32px,9vw,48px)}
+  #hero-scene{height:260px}
+  section{padding:56px 0}
+  .dims{grid-template-columns:1fr 1fr}
+  .cycle{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cycle-item:after{display:none!important}
+  .domains{grid-template-columns:1fr 1fr}
+  :root{--rail:46px;--top:48px}
+  .topmeta{display:none}
+  .tool{width:34px;height:36px;font-size:16px}
+  .scene-label-wb{max-width:210px}.scene-label-wb p{font-size:10px}
+  .hudstats .metric:nth-child(n+3){display:none}
+  .panel{width:min(250px,calc(100vw - 110px))}
+  #help{display:none}
+  #architecture{top:auto;bottom:80px;max-width:70%;flex-wrap:wrap;justify-content:center}
+}
+@media(max-width:390px){.dims,.domains{grid-template-columns:1fr}.cta .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<!-- ========== GLOBAL NAV (overview) ========== -->
+<nav class="site-nav" aria-label="Main navigation" id="mainNav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top">SMART DISTRICT <span>TERRITORY™</span> <small>5D+</small></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu ☰</button>
+    <div class="nav-links" id="nav-links">
+      <a href="#architecture">Architecture</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#domains">Domains</a>
+      <a href="#positioning">Positioning</a>
+      <button type="button" class="nav-cta" id="openWorkbench">Open Workbench →</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== OVERVIEW ========== -->
+<div id="overview">
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow">Territorial Operating System</div>
+      <h1>From a Digital Twin to <span class="gradient-text">Territorial Intelligence</span></h1>
+      <p class="intro"><strong>SMART DISTRICT TERRITORY™ 5D+</strong> combines spatial intelligence, dynamic modeling and scenario-based decision support. Infrastructure resilience is one application of a broader territorial intelligence system.</p>
+      <div class="cta">
+        <button type="button" class="btn btn-primary" id="heroWorkbench">Enter 3D Workbench <span aria-hidden="true">→</span></button>
+        <a class="btn btn-secondary" href="#architecture">Explore Architecture</a>
+      </div>
+    </div>
+    <div class="scene-shell" aria-label="Conceptual 3D digital twin scene">
+      <div class="scene-topline"><span class="scene-label">3D MODEL · CONCEPTUAL</span><span class="scene-status">● LIVE PREVIEW</span></div>
+      <canvas id="hero-scene" role="img" aria-label="Interactive 3D conceptual port district"></canvas>
+      <div class="scene-fallback" id="hero-fallback"><div><b>Territorial Digital Twin</b>3D scene unavailable.<br>Architecture overview remains available.</div></div>
+      <div class="scene-caption"><strong>Illustrative port &amp; energy district</strong><span>Conceptual · not operational data</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="architecture">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>The <span class="gradient-text">5D+</span> Architecture</h2>
+      <p>Each dimension adds a layer of territorial understanding—from spatial foundations to scenario space. This is SDT's architectural model, not a universal industry standard.</p>
+    </div>
+    <div class="dims">
+      <article class="dim"><div class="number">1D</div><h3>Spatial Foundation</h3><p>Coordinates, geometry, location, distances and territorial topology.</p></article>
+      <article class="dim"><div class="number">2D</div><h3>Geospatial Intelligence</h3><p>GIS layers, boundaries, networks, assets, routes and spatial relationships.</p></article>
+      <article class="dim"><div class="number">3D</div><h3>Digital Representation</h3><p>Terrain, buildings, infrastructure, BIM, volumetric scenes and digital twins.</p></article>
+      <article class="dim"><div class="number">4D</div><h3>Temporal Intelligence</h3><p>Time, events, state changes, history, dynamics and process sequences.</p></article>
+      <article class="dim featured"><div class="number">5D+</div><h3>Territorial Intelligence &amp; Scenario Space</h3><p>Dependencies, rules, alternative states, consequence modeling, forecasting, optimization and decision support.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="section-alt" id="principle">
+  <div class="wrap principle-grid">
+    <div class="principle-copy">
+      <h2>Main Principle</h2>
+      <p class="statement">GIS shows <span>where</span>. BIM describes <span>what is built</span>. 3D shows <span>how it is structured</span>. 4D shows <span>how it changes over time</span>. SDT 5D+ explores <span>what may happen</span> when conditions change—and <span>which decisions</span> may lead to preferred outcomes.</p>
+      <div class="note">In this framework, 5D+ means territorial intelligence and scenario space. In other industries, “5D” may refer to different concepts, including construction cost.</div>
+    </div>
+    <div class="pyramid-panel">
+      <svg viewBox="0 0 560 390" role="img" aria-labelledby="pyramid-title pyramid-desc">
+        <title id="pyramid-title">SDT 5D+ conceptual architecture pyramid</title>
+        <desc id="pyramid-desc">Layered model from spatial foundation and GIS to 3D digital twin, 4D temporal intelligence and 5D+ scenario space.</desc>
+        <defs>
+          <linearGradient id="pyramidFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8" stop-opacity=".55"/><stop offset="1" stop-color="#818cf8" stop-opacity=".23"/></linearGradient>
+          <linearGradient id="topFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818cf8" stop-opacity=".9"/><stop offset="1" stop-color="#38bdf8" stop-opacity=".45"/></linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g stroke="#38bdf8" stroke-width="1.5" fill="url(#pyramidFill)">
+          <polygon points="280,24 345,88 215,88" fill="url(#topFill)" stroke="#a5a6ff" filter="url(#glow)"/>
+          <polygon points="190,99 370,99 414,155 146,155"/>
+          <polygon points="135,166 425,166 470,224 90,224"/>
+          <polygon points="78,235 482,235 530,302 30,302"/>
+        </g>
+        <g fill="#f1f7ff" font-family="system-ui,sans-serif" font-weight="750" text-anchor="middle">
+          <text x="280" y="68" font-size="17">5D+ · Scenario Space</text>
+          <text x="280" y="133" font-size="17">4D · Temporal Intelligence</text>
+          <text x="280" y="201" font-size="17">3D · Digital Twin</text>
+          <text x="280" y="275" font-size="17">2D GIS · 1D Spatial Foundation</text>
+        </g>
+        <g fill="#8be3ff" font-family="system-ui,sans-serif" font-size="12">
+          <circle cx="365" cy="56" r="4"/><path d="M370 56H490" stroke="#818cf8"/><text x="495" y="60">What may happen</text>
+          <circle cx="414" cy="126" r="4"/><path d="M419 126H490" stroke="#38bdf8"/><text x="495" y="130">How it changes</text>
+          <circle cx="470" cy="194" r="4"/><path d="M475 194H490" stroke="#38bdf8"/><text x="495" y="198">How it is structured</text>
+          <circle cx="530" cy="269" r="4"/><path d="M535 269H548" stroke="#38bdf8"/>
+        </g>
+        <text x="280" y="342" fill="#a5b5ca" font-family="system-ui,sans-serif" font-size="12" text-anchor="middle">WHERE → WHAT EXISTS → HOW IT CHANGES → WHAT MAY HAPPEN</text>
+        <text x="280" y="364" fill="#617b99" font-family="system-ui,sans-serif" font-size="10" text-anchor="middle">Conceptual model · not a standards-based dimensional taxonomy</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="capabilities">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>From Observation to Evidence</h2>
+      <p>A closed decision-support loop: test scenarios, document decisions and compare model outputs with observed outcomes.</p>
+    </div>
+    <div class="cycle">
+      <article class="cycle-item"><div class="cycle-icon" aria-hidden="true">◎</div><b>Observe</b><p>Monitor territorial conditions and data quality.</p></article>
+      <article class="cycle-item"><div class="cycle-icon" aria-hidden="true">⌘</div><b>Understand</b><p>Identify structure, dependencies and constraints.</p></article>
+      <article class="cycle-item"><div class="cycle-icon" aria-hidden="true">◇</div><b>Simulate</b><p>Test alternative assumptions and scenarios.</p></article>
+      <article class="cycle-item"><div class="cycle-icon" aria-hidden="true">↗</div><b>Predict</b><p>Estimate outcomes and uncertainty ranges.</p></article>
+      <article class="cycle-item"><div class="cycle-icon" aria-hidden="true">⊙</div><b>Optimize</b><p>Compare options against explicit criteria.</p></article>
+      <article class="cycle-item"><div class="cycle-icon" aria-hidden="true">✓</div><b>Decide</b><p>Support accountable human decisions.</p></article>
+      <article class="cycle-item"><div class="cycle-icon" aria-hidden="true">↻</div><b>Learn</b><p>Evaluate forecasts against observed results.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="section-alt" id="domains">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Domains Connected to a Unified Core</h2>
+      <p>Energy, transport, communications, logistics, ecology and resilience are modeled as connected domains within one territorial intelligence framework.</p>
+    </div>
+    <div class="domains-layout">
+      <div class="domains">
+        <article class="domain"><div class="domain-icon" aria-hidden="true">ϟ</div><div><h3>Energy</h3><p>Generation, demand and network dependencies.</p></div></article>
+        <article class="domain"><div class="domain-icon" aria-hidden="true">⇄</div><div><h3>Transport</h3><p>Flows, routes, access and capacity.</p></div></article>
+        <article class="domain"><div class="domain-icon" aria-hidden="true">⌁</div><div><h3>Communications</h3><p>Coverage, connectivity and dependencies.</p></div></article>
+        <article class="domain"><div class="domain-icon" aria-hidden="true">▣</div><div><h3>Logistics</h3><p>Supply chains, facilities and critical nodes.</p></div></article>
+        <article class="domain"><div class="domain-icon" aria-hidden="true">♧</div><div><h3>Environment</h3><p>Environmental loads and ecosystem state.</p></div></article>
+        <article class="domain"><div class="domain-icon" aria-hidden="true">⬡</div><div><h3>Resilience</h3><p>Service continuity and recovery scenarios.</p></div></article>
+      </div>
+      <aside class="core-card">
+        <div class="core-symbol" aria-hidden="true">⌘</div>
+        <h3>One Intelligence Core<br><span class="gradient-text">SDT 5D+</span></h3>
+        <p>Shared spatial context, explicit dependencies, scenario evaluation and traceable decision support—not isolated dashboards.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section id="positioning">
+  <div class="wrap">
+    <div class="positioning">
+      <div class="kicker">Product Positioning</div>
+      <h2>SMART DISTRICT TERRITORY™ <span class="gradient-text">5D+</span></h2>
+      <p><strong>Territorial Operating System</strong> for spatial intelligence, dynamic modeling and scenario-based decision support.<br><br>Move from a digital representation of a territory to understanding its behavior, exploring possible future states and making better-informed decisions about change.</p>
+      <div class="cta" style="justify-content:center;margin-top:22px">
+        <button type="button" class="btn btn-primary" id="posWorkbench">Open Interactive Workbench →</button>
+        <a class="btn btn-secondary" href="#top">Back to Top ↑</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="ov-footer">
+  <div class="wrap">
+    <strong>SMART DISTRICT TERRITORY™ 5D+</strong> · Spatial Intelligence · Dynamic Modeling · Scenario-Based Decision Support
+    <div class="smallprint">Conceptual architecture and illustrative 3D scenes. Capabilities depend on data availability, model validation and implementation. Engineering engine uses calibrated synthetic datasets.</div>
+  </div>
+</footer>
+</div><!-- /overview -->
+
+<!-- ========== WORKBENCH ========== -->
+<div id="workbench">
+<div id="app">
+  <header class="topbar">
+    <div class="brand">SMART DISTRICT <span>TERRITORY™</span> 5D+</div>
+    <div class="topmeta">Territorial OS · GIS + BIM · 5D Engine</div>
+    <div class="topspacer"></div>
+    <div class="status"><i class="dot"></i><span id="statusText">GIS+BIM concept · synthetic</span></div>
+    <button class="wb-btn back-overview" id="backOverview" title="Return to architecture overview">← Overview</button>
+    <button class="wb-btn" id="fullscreenBtn" title="Toggle fullscreen">⛶ FULLSCREEN</button>
+  </header>
+  <nav class="toolrail left" aria-label="Scene tools">
+    <button class="tool active" data-panel="scenePanel" title="Scene & camera">◉</button>
+    <button class="tool" data-tool="select" title="Select / inspect">⌖</button>
+    <button class="tool" data-tool="move" title="Move object">✥</button>
+    <button class="tool" data-tool="rotate" title="Rotate object">⟳</button>
+    <button class="tool" data-tool="scale" title="Scale object">⤢</button>
+    <button class="tool" data-tool="measure" title="Measure distance">↔</button>
+    <button class="tool" data-tool="annotate" title="Add annotation">✎</button>
+    <button class="tool" data-panel="layersPanel" title="Layers & visibility">▤</button>
+    <button class="tool" data-panel="strataPanel" title="Vertical domains · strata">☰</button>
+    <div class="railspacer"></div>
+    <button class="tool" id="resetBtn" title="Reset view">⟲</button>
+  </nav>
+  <nav class="toolrail right" aria-label="Audit and edit tools">
+    <button class="tool" data-panel="auditPanel" title="Audit inspector">◎</button>
+    <button class="tool" data-panel="objectsPanel" title="Scene objects">▦</button>
+    <button class="tool" data-panel="propertiesPanel" title="Object properties">☷</button>
+    <button class="tool" data-panel="scenarioPanel" title="Scenario controls">⟁</button>
+    <button class="tool" data-panel="timePanel" title="Time dimension">◷</button>
+    <button class="tool" data-panel="resultsPanel" title="5D engineering results">Σ</button>
+    <button class="tool" data-panel="environmentPanel" title="Lighting & viewport">☼</button>
+    <button class="tool" data-panel="exportPanel" title="GIS / CAD / BIM data">⇧</button>
+    <div class="railspacer"></div>
+    <button class="tool" id="helpBtn" title="Keyboard & mouse help">?</button>
+  </nav>
+  <div id="viewport"><canvas id="scene" aria-label="Interactive conceptual 3D port scene"></canvas></div>
+  <div id="loading">Initializing 3D scene…</div>
+  <div class="scene-label-wb">
+    <div class="eyebrow">Spatial Intelligence / Live GIS · CAD/BIM · 5D</div>
+    <h1>Real data · 5D district.</h1>
+    <p>Import OpenStreetMap buildings, GeoJSON footprints, or CAD/BIM glTF. Provenance tracked. 5D engine runs on loaded assets.</p>
+  </div>
+  <div id="architecture">
+    <span class="layerchip">1D · Foundation</span><span class="layerchip active">2D · GIS</span><span class="layerchip active">3D · BIM</span><span class="layerchip active">4D · Time</span><span class="layerchip active">5D · Cost</span>
+  </div>
+  <div id="help">DRAG · ORBIT<br>RIGHT-DRAG · PAN<br>SCROLL · ZOOM<br>CLICK · INSPECT</div>
+  <div id="strataStack" aria-hidden="true">
+    <span class="strata-chip" data-sid="undercity">Undercity</span>
+    <span class="strata-chip" data-sid="subterra">Subterra</span>
+    <span class="strata-chip" data-sid="abyss">Abyss</span>
+    <span class="strata-chip current" data-sid="surface">Surface</span>
+    <span class="strata-chip" data-sid="airspace">Airspace</span>
+    <span class="strata-chip" data-sid="leo">LEO</span>
+    <span class="strata-chip" data-sid="lunar">Lunar</span>
+    <span class="strata-chip" data-sid="solar">Solar Near</span>
+    <span class="strata-chip" data-sid="planetary">Planetary</span>
+    <span class="strata-chip" data-sid="deepspace">Deep Space</span>
+  </div>
+  <div class="hud">
+    <div class="hudbox"><div class="hudlabel">Active work mode</div><div class="hudvalue" id="modeValue">Select / Inspect</div></div>
+    <div class="hudstats">
+      <div class="hudbox metric"><div class="hudlabel">Objects</div><div class="hudvalue" id="objectCount">—</div></div>
+      <div class="hudbox metric"><div class="hudlabel">Visible layers</div><div class="hudvalue" id="layerCount">6 / 6</div></div>
+      <div class="hudbox metric"><div class="hudlabel">Scenario</div><div class="hudvalue" id="scenarioValue">Baseline</div></div>
+      <div class="hudbox metric"><div class="hudlabel">Stratum</div><div class="hudvalue" id="strataValue">Surface / City</div></div>
+    </div>
+  </div>
+  <div id="intro">
+    <div class="eyebrow">SDT 5D+ / Concept workbench</div>
+    <h2>3D scene audit workspace</h2>
+    <p>Full-screen spatial workbench: GIS-style layers, BIM massing, inspection, properties, time & scenario controls, annotations, measurement, JSON export. Geometry is synthetic by default. Scenario engine uses calibrated tables — not live SCADA. Open Data panel (⇧) to fetch OSM or load files.</p>
+    <div class="btnrow"><button class="wb-btn primary" id="enterBtn">ENTER WORKSPACE →</button><button class="wb-btn" id="introFullscreen">⛶ FULLSCREEN</button></div>
+  </div>
+  <section class="panel leftpanel open" id="scenePanel">
+    <div class="panelhead">Scene & Camera <button class="wb-btn" data-close="scenePanel">×</button></div>
+    <div class="panelbody">
+      <div class="field"><label>Camera preset</label><select id="cameraPreset"><option value="overview">District overview</option><option value="top">Top-down GIS audit</option><option value="port">Port approach</option><option value="city">City core</option><option value="close">Infrastructure close-up</option></select></div>
+      <div class="field"><label>Orbit sensitivity</label><input id="sensitivity" type="range" min=".3" max="2.5" step=".1" value="1"><div class="smalllabel">Mouse / touch response</div></div>
+      <div class="field"><label>Scene scale</label><input id="sceneScale" type="range" min=".65" max="1.5" step=".05" value="1"></div>
+      <div class="btnrow"><button class="wb-btn" id="gridBtn">Toggle grid</button><button class="wb-btn" id="labelsBtn">Toggle labels</button><button class="wb-btn" id="wireBtn">Wireframe</button></div>
+    </div>
+  </section>
+  <section class="panel leftpanel" id="layersPanel">
+    <div class="panelhead">Layers & Visibility <button class="wb-btn" data-close="layersPanel">×</button></div>
+    <div class="panelbody">
+      <label><input type="checkbox" checked data-layer="terrain"> Terrain / ground (GIS base)</label>
+      <label><input type="checkbox" checked data-layer="water"> Water / basin</label>
+      <label><input type="checkbox" checked data-layer="buildings"> Buildings / BIM massing</label>
+      <label><input type="checkbox" checked data-layer="transport"> Roads / quay / routes (GIS)</label>
+      <label><input type="checkbox" checked data-layer="utilities"> Energy / utility assets</label>
+      <label><input type="checkbox" checked data-layer="labels"> Object labels</label>
+      <div class="smalllabel">Layers map to planned GIS feature classes and BIM LOD1–LOD2 placeholders.</div>
+      <button class="wb-btn" id="allLayers">Show all layers</button>
+    </div>
+  </section>
+  <section class="panel leftpanel" id="strataPanel">
+    <div class="panelhead">Vertical Domains · Strata <button class="wb-btn" data-close="strataPanel">×</button></div>
+    <div class="panelbody">
+      <div class="smalllabel">Territorial OS vertical continuum — from deep subsurface to deep space. Switching domain adapts scene mood, fog, camera and conceptual assets for that stratum.</div>
+      <div class="strata-list" id="strataList">
+        <button type="button" class="strata-btn" data-strata="undercity"><span class="si">⛏</span><span><span class="sn">Undercity / DC</span><span class="sd">Deep underground · mines · vaults · data caverns</span><span class="strata-alt">−2 km … −200 m</span></span></button>
+        <button type="button" class="strata-btn" data-strata="subterra"><span class="si">🚇</span><span><span class="sn">Subterra / Metro</span><span class="sd">Metro · tunnels · subsurface utilities · bunkers</span><span class="strata-alt">−200 m … −5 m</span></span></button>
+        <button type="button" class="strata-btn" data-strata="abyss"><span class="si">🌊</span><span><span class="sn">Abyss / Subsea</span><span class="sd">Subsea · ports below · cables · energy nodes</span><span class="strata-alt">−11 km … 0 m MSL</span></span></button>
+        <button type="button" class="strata-btn active" data-strata="surface"><span class="si">🏙</span><span><span class="sn">Surface / City</span><span class="sd">Urban fabric · port · energy · logistics district</span><span class="strata-alt">0 … +500 m</span></span></button>
+        <button type="button" class="strata-btn" data-strata="airspace"><span class="si">✈</span><span><span class="sn">Airspace</span><span class="sd">Low / high altitude · UTM · corridors · drones</span><span class="strata-alt">+0.5 … +20 km</span></span></button>
+        <button type="button" class="strata-btn" data-strata="leo"><span class="si">🛰</span><span><span class="sn">LEO / Stations</span><span class="sd">Low Earth orbit · ISS-class · mega-constellations</span><span class="strata-alt">+160 … +2 000 km</span></span></button>
+        <button type="button" class="strata-btn" data-strata="lunar"><span class="si">🌑</span><span><span class="sn">Lunar / Cislunar</span><span class="sd">Moon orbit · Gateway · surface outposts</span><span class="strata-alt">~384 000 km</span></span></button>
+        <button type="button" class="strata-btn" data-strata="solar"><span class="si">☀</span><span><span class="sn">Solar Near Space</span><span class="sd">Inner system · Lagrange · solar sails · probes</span><span class="strata-alt">0.3 … 5 AU</span></span></button>
+        <button type="button" class="strata-btn" data-strata="planetary"><span class="si">🪐</span><span><span class="sn">Planetary Orbits</span><span class="sd">Mars · outer planets · transfer corridors</span><span class="strata-alt">1.5 … 30 AU</span></span></button>
+        <button type="button" class="strata-btn" data-strata="deepspace"><span class="si">✦</span><span><span class="sn">Deep Space</span><span class="sd">Interstellar · Kuiper · heliopause beyond</span><span class="strata-alt">&gt; 50 AU</span></span></button>
+      </div>
+      <div class="field" style="margin-top:8px"><label>Stratum focus altitude (relative)</label>
+        <input id="strataAltitude" type="range" min="0" max="100" value="40">
+        <span class="smalllabel" id="strataAltVal">Surface reference · conceptual scale</span>
+      </div>
+      <div class="btnrow">
+        <button class="wb-btn primary" id="strataApply">Apply domain view</button>
+        <button class="wb-btn" id="strataShowAll">Show stack diagram</button>
+      </div>
+      <div class="smalllabel" id="strataHint">Active: Surface / City — district digital twin with GIS + BIM + 5D engine.</div>
+    </div>
+  </section>
+  <section class="panel rightpanel" id="auditPanel">
+    <div class="panelhead">Audit Inspector <button class="wb-btn" data-close="auditPanel">×</button></div>
+    <div class="panelbody">
+      <div><div class="smalllabel">Selected object</div><strong id="auditName">Nothing selected</strong></div>
+      <div class="field"><label>Audit status</label><select id="auditStatus"><option>Not assessed</option><option>Verified</option><option>Needs review</option><option>Issue identified</option><option>Not applicable</option></select></div>
+      <div class="field"><label>Confidence</label><input id="confidence" type="range" min="0" max="100" value="50"><div id="confidenceVal" class="smalllabel">50% · illustrative</div></div>
+      <div class="field"><label>Audit note</label><input id="auditNote" type="text" placeholder="Add evidence or observation…"></div>
+      <button class="wb-btn primary" id="saveAudit">Save audit attributes</button>
+      <div class="smalllabel">Audit metadata is stored in this page session and included in JSON export.</div>
+    </div>
+  </section>
+  <section class="panel rightpanel" id="objectsPanel">
+    <div class="panelhead">Scene Objects <button class="wb-btn" data-close="objectsPanel">×</button></div>
+    <div class="panelbody" id="objectList"></div>
+  </section>
+  <section class="panel rightpanel" id="propertiesPanel">
+    <div class="panelhead">Object Properties <button class="wb-btn" data-close="propertiesPanel">×</button></div>
+    <div class="panelbody">
+      <div><div class="smalllabel">Current selection</div><strong id="propName">Select an object in the scene</strong></div>
+      <div class="field"><label>Object label</label><input id="propLabel" type="text" placeholder="Object label"></div>
+      <div class="field"><label>Position X</label><input id="posX" type="number" step=".1" value="0"></div>
+      <div class="field"><label>Position Y</label><input id="posY" type="number" step=".1" value="0"></div>
+      <div class="field"><label>Position Z</label><input id="posZ" type="number" step=".1" value="0"></div>
+      <div class="field"><label>Height / scale</label><input id="heightProp" type="range" min=".2" max="8" step=".1" value="1"><span class="smalllabel" id="heightVal">1.0</span></div>
+      <div class="field"><label>Color</label><input id="colorProp" type="color" value="#4b9bb5"></div>
+      <div class="btnrow"><button class="wb-btn primary" id="applyProps">Apply changes</button><button class="wb-btn" id="deleteObj" style="border-color:#8b6538;color:var(--amber)">Delete selected</button></div>
+    </div>
+  </section>
+  <section class="panel rightpanel" id="scenarioPanel">
+    <div class="panelhead">5D BIM · Engineering <button class="wb-btn" data-close="scenarioPanel">×</button></div>
+    <div class="panelbody">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--cyan)">
+        <input type="checkbox" id="engMode"> 5D Engineering engine ON
+      </label>
+      <div class="smalllabel" id="engModeHint">Off: visual mode. On: 4D phases + 5D cost + flood/energy/traffic models.</div>
+      <div class="field"><label>Scenario preset</label><select id="scenarioPreset"><option value="Baseline">Baseline</option><option value="Energy transition">Energy transition</option><option value="Transport disruption">Transport disruption</option><option value="Flood stress test">Flood stress test</option><option value="Growth scenario">Growth scenario</option></select></div>
+      <div class="field"><label>Demand multiplier</label><input id="demand" type="range" min="50" max="180" value="100"><span class="smalllabel" id="demandVal">100%</span></div>
+      <div class="field"><label>Infrastructure stress</label><input id="stress" type="range" min="0" max="100" value="15"><span class="smalllabel" id="stressVal">15 / 100</span></div>
+      <div class="field"><label>Sea level anomaly (m)</label><input id="waterLevel" type="range" min="-1" max="3" step=".1" value="0"><span class="smalllabel" id="waterVal">0.0 m</span></div>
+      <div class="field"><label>Discount rate (5D NPV)</label><input id="discountRate" type="range" min="0" max="12" step="0.5" value="5"><span class="smalllabel" id="discountVal">5.0%</span></div>
+      <div class="field"><label>Sim layers</label>
+        <label><input type="checkbox" id="simFlood" checked> Flood model</label>
+        <label><input type="checkbox" id="simEnergy" checked> Energy balance</label>
+        <label><input type="checkbox" id="simFlows" checked> Traffic / flows</label>
+        <label><input type="checkbox" id="sim4d" checked> 4D construction</label>
+        <label><input type="checkbox" id="sim5d" checked> 5D cost / NPV</label>
+      </div>
+      <button class="wb-btn primary" id="applyScenario">Run engineering step</button>
+      <div class="smalllabel">Engine: table curves + balance equations. Dataset: calibrated synthetic — not live SCADA/GIS.</div>
+    </div>
+  </section>
+  <section class="panel rightpanel" id="timePanel">
+    <div class="panelhead">4D / 5D Timeline <button class="wb-btn" data-close="timePanel">×</button></div>
+    <div class="panelbody">
+      <div class="field"><label>Simulation time (T, months equiv.)</label><input id="timeStep" type="range" min="0" max="100" value="0"><span id="timeVal" class="smalllabel">T+00 · phase 0</span></div>
+      <div class="btnrow">
+        <button class="wb-btn" id="timePrev">◀</button>
+        <button class="wb-btn primary" id="timePlay">▶ Play 4D/5D</button>
+        <button class="wb-btn" id="timeNext">▶</button>
+        <button class="wb-btn" id="timeReset">Reset</button>
+      </div>
+      <div class="field"><label>Playback speed</label><input id="playSpeed" type="range" min="0.25" max="4" step="0.25" value="1"><span class="smalllabel" id="playSpeedVal">1×</span></div>
+      <div id="phaseInfo" class="smalllabel">KPIs update when engine is ON.</div>
+    </div>
+  </section>
+  <section class="panel rightpanel" id="resultsPanel">
+    <div class="panelhead">5D Results · KPIs <button class="wb-btn" data-close="resultsPanel">×</button></div>
+    <div class="panelbody">
+      <div class="field"><label>Flood</label><div id="kpiFlood" class="hudvalue" style="font-size:12px">—</div></div>
+      <div class="field"><label>Energy</label><div id="kpiEnergy" class="hudvalue" style="font-size:12px">—</div></div>
+      <div class="field"><label>Transport</label><div id="kpiTraffic" class="hudvalue" style="font-size:12px">—</div></div>
+      <div class="field"><label>4D construction</label><div id="kpi4d" class="hudvalue" style="font-size:12px">—</div></div>
+      <div class="field"><label>5D cost</label><div id="kpi5d" class="hudvalue" style="font-size:12px">—</div></div>
+      <div class="field"><label>Asset risk index</label><div id="kpiRisk" class="hudvalue" style="font-size:12px">—</div></div>
+      <button class="wb-btn primary" id="exportResults">Export results CSV</button>
+      <button class="wb-btn" id="exportEngJson">Export engineering JSON</button>
+      <div class="smalllabel" id="modelMeta">Model: SDT-Eng-v1 · dataset: synthetic-calibrated</div>
+    </div>
+  </section>
+  <section class="panel rightpanel" id="environmentPanel">
+    <div class="panelhead">Environment <button class="wb-btn" data-close="environmentPanel">×</button></div>
+    <div class="panelbody">
+      <div class="field"><label>Lighting</label><select id="lighting"><option value="dusk">Technical dusk</option><option value="day">Daylight</option><option value="night">Night / audit</option></select></div>
+      <div class="field"><label>Ambient intensity</label><input id="ambient" type="range" min=".2" max="2" step=".1" value="1"></div>
+      <div class="field"><label>Outline intensity</label><input id="outline" type="range" min=".1" max="2" step=".1" value="1"></div>
+      <label><input type="checkbox" id="showAxes" checked> Show XYZ axes</label>
+      <label><input type="checkbox" id="showCompass" checked> Show compass / north marker</label>
+      <button class="wb-btn" id="screenshotBtn">Capture viewport image</button>
+    </div>
+  </section>
+  <section class="panel rightpanel" id="exportPanel">
+    <div class="panelhead">Data · GIS / CAD / BIM <button class="wb-btn" data-close="exportPanel">×</button></div>
+    <div class="panelbody">
+      <div class="field"><label>Live GIS · OpenStreetMap</label>
+        <select id="osmPreset">
+          <option value="51.5074,-0.1278,0.012">London centre</option>
+          <option value="53.3498,-6.2603,0.012">Dublin centre</option>
+          <option value="52.5200,13.4050,0.012">Berlin centre</option>
+          <option value="59.3293,18.0686,0.012">Stockholm centre</option>
+          <option value="60.1699,24.9384,0.012">Helsinki centre</option>
+          <option value="48.8566,2.3522,0.010">Paris centre</option>
+        </select>
+        <div class="btnrow" style="margin-top:6px"><button class="wb-btn primary" id="fetchOsm">Fetch OSM buildings</button></div>
+        <div class="smalllabel">Real footprints + heights from OpenStreetMap (Overpass API).</div>
+      </div>
+      <div class="field"><label>Import GIS GeoJSON</label>
+        <label class="wb-btn">Load .geojson / .json <input type="file" id="importGeojson" accept=".geojson,.json,application/geo+json,application/json" hidden></label>
+      </div>
+      <div class="field"><label>Import CAD / BIM (glTF)</label>
+        <label class="wb-btn">Load .glb / .gltf <input type="file" id="importGltf" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" hidden></label>
+      </div>
+      <div class="field"><label>Workbench scene</label>
+        <button class="wb-btn primary" id="exportJson">Export scene JSON</button>
+        <label class="wb-btn">Import scene JSON <input type="file" id="importJson" accept=".json,application/json" hidden></label>
+        <button class="wb-btn" id="exportAudit">Export audit CSV</button>
+        <button class="wb-btn" id="resetScene">Reset synthetic demo</button>
+      </div>
+      <div id="provenanceBox" class="smalllabel" style="border:1px solid var(--line);padding:8px;border-radius:6px;line-height:1.55">
+        <strong style="color:var(--cyan)">Data provenance</strong><br>
+        Source: synthetic demo<br>
+        CRS: local scene units<br>
+        Features: —
+      </div>
+    </div>
+  </section>
+  <div id="toast" role="status" aria-live="polite"></div>
+</div>
+</div><!-- /workbench -->
+
+<!-- Hero 3D (lightweight, overview only) -->
+<script type="module">
+import * as THREE from 'three';
+
+/* ===== Mode switching ===== */
+const body=document.body;
+function openWB(){
+  body.classList.add('wb-mode');
+  window.dispatchEvent(new Event('wb-open'));
+  history.replaceState(null,'','#workbench');
+}
+function closeWB(){
+  body.classList.remove('wb-mode');
+  history.replaceState(null,'','#top');
+  window.scrollTo(0,0);
+}
+['openWorkbench','heroWorkbench','posWorkbench'].forEach(id=>{
+  const el=document.getElementById(id); if(el) el.addEventListener('click',openWB);
+});
+document.getElementById('backOverview')?.addEventListener('click',closeWB);
+if(location.hash==='#workbench') openWB();
+
+/* Mobile nav */
+const menuButton=document.querySelector('.menu-toggle');
+const navLinks=document.getElementById('nav-links');
+menuButton?.addEventListener('click',()=>{
+  const open=menuButton.getAttribute('aria-expanded')==='true';
+  menuButton.setAttribute('aria-expanded',String(!open));
+  navLinks.classList.toggle('open',!open);
+});
+navLinks?.querySelectorAll('a,button').forEach(link=>link.addEventListener('click',()=>{
+  menuButton?.setAttribute('aria-expanded','false');
+  navLinks?.classList.remove('open');
+}));
+
+/* ===== Hero scene (lightweight) ===== */
+(async function initHero(){
+  const canvas=document.getElementById('hero-scene');
+  const fallback=document.getElementById('hero-fallback');
+  const shell=canvas?.closest('.scene-shell');
+  if(!canvas||!shell) return;
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  try{
+    const scene=new THREE.Scene();
+    scene.background=new THREE.Color('#061321');
+    scene.fog=new THREE.FogExp2('#061321',0.027);
+    const camera=new THREE.PerspectiveCamera(42,1,0.1,220);
+    camera.position.set(22,22,28); camera.lookAt(0,0,0);
+    const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'low-power'});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
+    renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure=1.12;
+    scene.add(new THREE.HemisphereLight(0x9edcff,0x07101b,2.0));
+    const key=new THREE.DirectionalLight(0x76cfff,2.8); key.position.set(12,24,10); scene.add(key);
+    const violet=new THREE.PointLight(0x655cff,18,45); violet.position.set(-10,7,-9); scene.add(violet);
+    const ground=new THREE.Mesh(new THREE.PlaneGeometry(58,46),new THREE.MeshStandardMaterial({color:0x081b2b,roughness:.92,metalness:.12}));
+    ground.rotation.x=-Math.PI/2; ground.position.y=-0.18; scene.add(ground);
+    const grid=new THREE.GridHelper(58,38,0x155078,0x102c45); grid.position.y=-0.14; grid.material.transparent=true; grid.material.opacity=.42; scene.add(grid);
+    const water=new THREE.Mesh(new THREE.PlaneGeometry(20,29),new THREE.MeshStandardMaterial({color:0x073653,emissive:0x03192b,emissiveIntensity:.6,roughness:.28,metalness:.45}));
+    water.rotation.x=-Math.PI/2; water.position.set(-12,-.08,0); scene.add(water);
+    const quayMat=new THREE.MeshStandardMaterial({color:0x18354a,roughness:.8});
+    function box(w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y+h/2,z);scene.add(m);return m}
+    box(1,.28,30,quayMat,-1.5,-.03,0); box(19,.28,1,quayMat,-11,-.03,-14.5); box(19,.28,1,quayMat,-11,-.03,14.5);
+    const roadMat=new THREE.MeshStandardMaterial({color:0x142b3c,roughness:.85,metalness:.1});
+    for(let x=-2;x<=22;x+=6) box(.34,.035,38,roadMat,x,-.11,0);
+    for(let z=-15;z<=15;z+=7) box(32,.035,.34,roadMat,9,-.105,z);
+    const buildingMats=[
+      new THREE.MeshStandardMaterial({color:0x174563,metalness:.32,roughness:.45,emissive:0x061a2b}),
+      new THREE.MeshStandardMaterial({color:0x253d70,metalness:.28,roughness:.48,emissive:0x090d25}),
+      new THREE.MeshStandardMaterial({color:0x1b5a68,metalness:.25,roughness:.5,emissive:0x05212a})
+    ];
+    const windowMat=new THREE.MeshStandardMaterial({color:0x53d9ff,emissive:0x149dd0,emissiveIntensity:1.2});
+    for(let ix=0;ix<7;ix++) for(let iz=0;iz<6;iz++){
+      const x=2+ix*3.2,z=-13+iz*5.0;
+      if((ix===2&&iz>1&&iz<5)||(ix===5&&iz===2)) continue;
+      const h=1.1+((ix*7+iz*11)%8)*.48, w=1.55+((ix+iz)%3)*.25, d=1.55+((ix*2+iz)%2)*.35;
+      const mat=buildingMats[(ix+iz)%buildingMats.length];
+      box(w,h,d,mat,x,h/2-.16,z);
+      if((ix+iz)%2===0){const strip=new THREE.Mesh(new THREE.BoxGeometry(w*.72,.035,.035),windowMat);strip.position.set(x,h-.18,z+d/2+.022);scene.add(strip);}
+    }
+    const mastMat=new THREE.MeshStandardMaterial({color:0xa6c9dc,metalness:.55,roughness:.35});
+    const bladeMat=new THREE.MeshStandardMaterial({color:0xd0efff,metalness:.25,roughness:.38,emissive:0x16334a});
+    const rotors=[];
+    function turbine(x,z){
+      const mast=new THREE.Mesh(new THREE.CylinderGeometry(.075,.12,4.2,8),mastMat); mast.position.set(x,2.1,z); scene.add(mast);
+      const rotor=new THREE.Group(); rotor.position.set(x,4.2,z); scene.add(rotor);
+      rotor.add(new THREE.Mesh(new THREE.SphereGeometry(.17,10,8),windowMat));
+      for(let i=0;i<3;i++){const blade=new THREE.Mesh(new THREE.BoxGeometry(.12,1.65,.07),bladeMat);blade.position.y=.95;blade.rotation.z=.14+i*Math.PI*2/3;rotor.add(blade);}
+      rotors.push(rotor);
+    }
+    turbine(15,-13); turbine(20,-9); turbine(17,12);
+    const containerColors=[0x087f9d,0x5c4cc4,0xa65a2e,0x1d6d7c,0x315f91];
+    for(let row=0;row<3;row++) for(let col=0;col<5;col++){
+      const h=.55+(col%2)*.25;
+      const mat=new THREE.MeshStandardMaterial({color:containerColors[(row+col)%containerColors.length],roughness:.65,metalness:.18});
+      box(1.3,h,1.0,mat,-5+col*1.55,h*row,-10+row*1.25);
+    }
+    const shipGroup=new THREE.Group(); scene.add(shipGroup); shipGroup.position.set(-12,0,-1);
+    const hull=new THREE.Mesh(new THREE.BoxGeometry(3.2,.55,10),new THREE.MeshStandardMaterial({color:0x102b40,metalness:.55,roughness:.38})); hull.position.y=.25; shipGroup.add(hull);
+    const bow=new THREE.Mesh(new THREE.ConeGeometry(1.55,.9,4),new THREE.MeshStandardMaterial({color:0x173f59,metalness:.35}));
+    bow.rotation.x=Math.PI/2; bow.rotation.z=Math.PI/4; bow.position.set(0,.25,5); shipGroup.add(bow);
+    for(let i=0;i<4;i++){const cargo=new THREE.Mesh(new THREE.BoxGeometry(2.4,.48,1.35),new THREE.MeshStandardMaterial({color:containerColors[i],roughness:.6}));cargo.position.set(0,.76,-3.1+i*1.7);shipGroup.add(cargo);}
+    const bridge=new THREE.Mesh(new THREE.BoxGeometry(1.25,1.1,1.2),buildingMats[0]); bridge.position.set(0,1.1,-4.1); shipGroup.add(bridge);
+    const nodePositions=[new THREE.Vector3(-5,1.1,-7),new THREE.Vector3(4,2.2,-8),new THREE.Vector3(11,1.6,-2),new THREE.Vector3(17,4.3,-12),new THREE.Vector3(14,1.8,9),new THREE.Vector3(3,2.8,10),new THREE.Vector3(20,2.4,4),new THREE.Vector3(-2,1.2,5)];
+    const linkMat=new THREE.LineBasicMaterial({color:0x42d7ff,transparent:true,opacity:.72});
+    [[0,1],[1,2],[2,3],[2,4],[4,5],[4,6],[5,7],[1,5],[0,7]].forEach(([a,b],idx)=>{
+      const mid=nodePositions[a].clone().add(nodePositions[b]).multiplyScalar(.5); mid.y+=1.8+(idx%3)*.55;
+      const curve=new THREE.QuadraticBezierCurve3(nodePositions[a],mid,nodePositions[b]);
+      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(36)),linkMat));
+    });
+    const nodeMat=new THREE.MeshBasicMaterial({color:0x82edff});
+    nodePositions.forEach((p,i)=>{
+      scene.add(new THREE.Mesh(new THREE.SphereGeometry(i===2?.22:.14,12,10),nodeMat).translateX(p.x).translateY(p.y).translateZ(p.z)||(()=>{const n=new THREE.Mesh(new THREE.SphereGeometry(i===2?.22:.14,12,10),nodeMat);n.position.copy(p);scene.add(n);})());
+      const node=new THREE.Mesh(new THREE.SphereGeometry(i===2?.22:.14,12,10),nodeMat); node.position.copy(p); scene.add(node);
+      const glow=new THREE.Mesh(new THREE.SphereGeometry(i===2?.42:.27,12,10),new THREE.MeshBasicMaterial({color:0x28bfff,transparent:true,opacity:.13})); glow.position.copy(p); scene.add(glow);
+    });
+    const beamMat=new THREE.MeshBasicMaterial({color:0x258fff,transparent:true,opacity:.08,side:THREE.DoubleSide,depthWrite:false});
+    [[-5,-7],[4,-8],[14,9]].forEach(([x,z])=>{const beam=new THREE.Mesh(new THREE.CylinderGeometry(.12,.42,8,12,1,true),beamMat);beam.position.set(x,3.8,z);scene.add(beam);});
+    function resize(){
+      const width=Math.max(1,shell.clientWidth);
+      const height=Math.max(250,Math.min(420,Math.round(width*.66)));
+      renderer.setSize(width,height,false);
+      camera.aspect=width/height; camera.updateProjectionMatrix();
+    }
+    const observer=new ResizeObserver(resize); observer.observe(shell); resize();
+    let raf=0;
+    function render(time){
+      raf=requestAnimationFrame(render);
+      if(document.hidden||body.classList.contains('wb-mode')) return;
+      if(!reduced){
+        const t=time*.00012;
+        camera.position.x=22+Math.sin(t)*1.2; camera.position.z=28+Math.cos(t)*1.0; camera.lookAt(0,0,0);
+        rotors.forEach((r,i)=>{r.rotation.z=time*.00055*(i%2===0?1:-1)});
+      }
+      renderer.render(scene,camera);
+    }
+    if(reduced) renderer.render(scene,camera); else raf=requestAnimationFrame(render);
+    document.addEventListener('visibilitychange',()=>{if(document.hidden&&raf)cancelAnimationFrame(raf);else if(!document.hidden&&!reduced&&!body.classList.contains('wb-mode'))raf=requestAnimationFrame(render)});
+  }catch(err){
+    if(fallback) fallback.style.display='flex';
+    if(canvas) canvas.style.display='none';
+    console.warn('Hero 3D failed',err);
+  }
+})();
+</script>
+
+<!-- Workbench full script -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const $=id=>document.getElementById(id);
+let wbReady=false, wbInited=false;
+
+function initWorkbench(){
+  if(wbInited) return;
+  wbInited=true;
+  const canvas=$('scene');
+  if(!canvas) return;
+
+  const scene=new THREE.Scene(); scene.background=new THREE.Color('#07131e'); scene.fog=new THREE.FogExp2('#07131e',.012);
+  const camera=new THREE.PerspectiveCamera(48,1,.1,1500); camera.position.set(72,55,85);
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFShadowMap;
+  const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.07; controls.target.set(15,0,0); controls.maxPolarAngle=Math.PI*.49; controls.maxDistance=250;
+  scene.add(new THREE.HemisphereLight('#9bcde7','#172431',1.3));
+  const keyLight=new THREE.DirectionalLight('#c8efff',2.2); keyLight.position.set(30,60,25); keyLight.castShadow=true; scene.add(keyLight);
+  const fillLight=new THREE.PointLight('#238cc5',90,150); fillLight.position.set(-30,25,-25); scene.add(fillLight);
+  const world=new THREE.Group(); scene.add(world);
+  const layers={terrain:new THREE.Group(),water:new THREE.Group(),buildings:new THREE.Group(),transport:new THREE.Group(),utilities:new THREE.Group(),labels:new THREE.Group(),sim:new THREE.Group(),strata:new THREE.Group()};
+  Object.values(layers).forEach(g=>world.add(g));
+  let selected=null, mode='select', showGrid=true, showLabels=true, wireframe=false, sensitivity=1, ambient=1, sceneScale=1;
+  let engMode=false, timePlaying=false, playSpeed=1, simClock=0;
+  const flowParticles=[], floodOverlays=[];
+  let lastResults=null, resultsHistory=[];
+  let currentStrata='surface';
+
+  /* ========== Vertical domains (Undercity → Deep Space) ========== */
+  const STRATA={
+    undercity:{id:'undercity',name:'Undercity / DC',label:'Undercity',alt:'−2 km … −200 m',hint:'Deep underground — mines, vaults, data caverns, critical storage.',bg:'#050308',fog:'#120a14',fogDensity:0.028,hemi:['#6a4a5a','#0a0608',0.7],key:['#c48a6a',1.2],cam:[40,8,50],target:[10,-8,0],maxDist:120,showSurface:false,showWater:false},
+    subterra:{id:'subterra',name:'Subterra / Metro',label:'Subterra',alt:'−200 m … −5 m',hint:'Metro, tunnels, subsurface utilities and civil defence volumes.',bg:'#0a1014',fog:'#142028',fogDensity:0.022,hemi:['#7aa0b0','#0c1218',0.9],key:['#88c0d0',1.5],cam:[35,6,40],target:[8,-2,0],maxDist:100,showSurface:false,showWater:false},
+    abyss:{id:'abyss',name:'Abyss / Subsea',label:'Abyss',alt:'−11 km … 0 m MSL',hint:'Subsea domain — cables, energy nodes, submerged infrastructure.',bg:'#020810',fog:'#041820',fogDensity:0.03,hemi:['#2a6a88','#02060c',0.6],key:['#3eb0d0',1.8],cam:[50,12,60],target:[0,-4,0],maxDist:140,showSurface:false,showWater:true},
+    surface:{id:'surface',name:'Surface / City',label:'Surface / City',alt:'0 … +500 m',hint:'Urban fabric, port, energy and logistics — primary GIS+BIM+5D twin.',bg:'#07131e',fog:'#07131e',fogDensity:0.012,hemi:['#9bcde7','#172431',1.3],key:['#c8efff',2.2],cam:[72,55,85],target:[15,0,0],maxDist:250,showSurface:true,showWater:true},
+    airspace:{id:'airspace',name:'Airspace',label:'Airspace',alt:'+0.5 … +20 km',hint:'Low/high altitude corridors, UTM, drones and aviation volumes.',bg:'#0a1828',fog:'#1a3048',fogDensity:0.008,hemi:['#b0d8f0','#203040',1.5],key:['#e0f4ff',2.6],cam:[90,80,100],target:[20,40,0],maxDist:320,showSurface:true,showWater:true},
+    leo:{id:'leo',name:'LEO / Stations',label:'LEO',alt:'+160 … +2 000 km',hint:'Low Earth orbit — stations, mega-constellations, orbital logistics.',bg:'#02040c',fog:'#040818',fogDensity:0.004,hemi:['#8090c0','#02040a',0.5],key:['#a0c0ff',1.4],cam:[0,40,180],target:[0,20,0],maxDist:500,showSurface:false,showWater:false},
+    lunar:{id:'lunar',name:'Lunar / Cislunar',label:'Lunar',alt:'~384 000 km',hint:'Cislunar space — Moon orbit, Gateway-class nodes, surface outposts.',bg:'#040208',fog:'#0a0610',fogDensity:0.003,hemi:['#c0b090','#08060a',0.45],key:['#e8d8b0',1.1],cam:[0,30,200],target:[0,10,0],maxDist:600,showSurface:false,showWater:false},
+    solar:{id:'solar',name:'Solar Near Space',label:'Solar Near',alt:'0.3 … 5 AU',hint:'Inner Solar System — Lagrange points, solar probes, transfer arcs.',bg:'#06040a',fog:'#10080c',fogDensity:0.002,hemi:['#e0a060','#0a0608',0.55],key:['#ffc070',1.6],cam:[0,20,220],target:[0,0,0],maxDist:700,showSurface:false,showWater:false},
+    planetary:{id:'planetary',name:'Planetary Orbits',label:'Planetary',alt:'1.5 … 30 AU',hint:'Planetary orbits and interplanetary corridors (Mars outward).',bg:'#03050c',fog:'#060a14',fogDensity:0.0015,hemi:['#6080c0','#04060c',0.4],key:['#90b0ff',1.0],cam:[0,15,240],target:[0,0,0],maxDist:800,showSurface:false,showWater:false},
+    deepspace:{id:'deepspace',name:'Deep Space',label:'Deep Space',alt:'> 50 AU',hint:'Beyond heliopause — interstellar medium, deep probes, outer system.',bg:'#010104',fog:'#020208',fogDensity:0.001,hemi:['#4050a0','#010102',0.25],key:['#7080ff',0.7],cam:[0,10,280],target:[0,0,0],maxDist:1000,showSurface:false,showWater:false}
+  };
+
+  function buildStrataAssets(){
+    const g=layers.strata; while(g.children.length) g.remove(g.children[0]);
+    /* Conceptual markers per domain — not engineering models */
+    const mk=(type,args,mat,pos,scale)=>{const mesh=new THREE.Mesh(type==='box'?new THREE.BoxGeometry(...args):type==='cyl'?new THREE.CylinderGeometry(...args):type==='sph'?new THREE.SphereGeometry(...args):new THREE.TorusGeometry(...args),mat); mesh.position.set(...pos); if(scale) mesh.scale.set(...scale); mesh.userData.strataOnly=true; g.add(mesh); return mesh;};
+    const rock=new THREE.MeshStandardMaterial({color:'#3a2a28',roughness:.95,metalness:.05});
+    const tunnel=new THREE.MeshStandardMaterial({color:'#2a3840',roughness:.8,metalness:.15});
+    const sea=new THREE.MeshStandardMaterial({color:'#0a3a55',transparent:true,opacity:.55,roughness:.3,metalness:.4});
+    const craft=new THREE.MeshStandardMaterial({color:'#8ab4c8',metalness:.55,roughness:.35,emissive:'#1a3040',emissiveIntensity:.4});
+    const orbit=new THREE.MeshBasicMaterial({color:'#5ec8ff',transparent:true,opacity:.35});
+    const moon=new THREE.MeshStandardMaterial({color:'#b0a090',roughness:.9});
+    const star=new THREE.MeshBasicMaterial({color:'#ffe8a0'});
+    const gas=new THREE.MeshStandardMaterial({color:'#c09060',roughness:.6,metalness:.1});
+    /* undercity shafts */
+    mk('cyl',[2.5,2.5,18,12],rock,[ -20,-12,10]); mk('box',[8,4,6],rock,[-8,-14,0]); mk('box',[5,3,5],rock,[12,-16,-8]);
+    /* subterra tubes */
+    mk('cyl',[1.8,1.8,40,16],tunnel,[0,-4,0]).rotation.z=Math.PI/2; mk('cyl',[1.2,1.2,30,12],tunnel,[15,-3,8]).rotation.z=Math.PI/2;
+    mk('box',[6,3,8],tunnel,[25,-5,-5]);
+    /* abyss volume */
+    mk('box',[80,1,100],sea,[-10,-6,0]); mk('cyl',[1,1,12,8],craft,[-25,-8,5]); mk('box',[4,2,6],craft,[-18,-7,-10]);
+    /* airspace corridors */
+    mk('box',[2,.4,60],craft,[10,45,0]); mk('box',[2,.4,40],craft,[30,55,-15]); mk('sph',[1.2,10,8],craft,[5,50,20]);
+    /* LEO ring + station */
+    const leoRing=mk('tor',[55,0.35,32,64],orbit,[0,25,0]); leoRing.rotation.x=Math.PI/2.4;
+    mk('box',[8,3,12],craft,[55,28,0]); mk('cyl',[1.5,1.5,20,8],craft,[55,38,0]);
+    /* lunar body + gateway */
+    mk('sph',[18,24,18],moon,[-80,20,-40]); mk('box',[6,2,8],craft,[-50,30,-20]);
+    /* solar — sun proxy + probe */
+    mk('sph',[12,20,16],star,[90,10,-80]); mk('cyl',[0.6,0.6,8,6],craft,[40,5,-30]);
+    /* planetary — gas giant proxy */
+    mk('sph',[22,28,22],gas,[-100,0,60]); const ring=mk('tor',[32,0.8,48,64],orbit,[-100,0,60]); ring.rotation.x=Math.PI/2.1;
+    /* deep space stars */
+    for(let i=0;i<40;i++){const s=mk('sph',[0.15+Math.random()*0.25,6,6],new THREE.MeshBasicMaterial({color:'#c0d0ff'}),[(Math.random()-0.5)*200,(Math.random()-0.5)*80,(Math.random()-0.5)*200]);}
+    g.visible=false;
+  }
+  buildStrataAssets();
+
+  function applyStrata(id){
+    const s=STRATA[id]; if(!s) return;
+    currentStrata=id;
+    scene.background.set(s.bg); scene.fog.color.set(s.fog); scene.fog.density=s.fogDensity;
+    const hemi=scene.children.find(o=>o.isHemisphereLight);
+    if(hemi){hemi.color.set(s.hemi[0]); hemi.groundColor.set(s.hemi[1]); hemi.intensity=s.hemi[2];}
+    keyLight.color.set(s.key[0]); keyLight.intensity=s.key[1];
+    camera.position.set(...s.cam); controls.target.set(...s.target); controls.maxDistance=s.maxDist;
+    controls.maxPolarAngle=s.showSurface?Math.PI*.49:Math.PI;
+    controls.update();
+    /* surface district visibility */
+    layers.terrain.visible=!!s.showSurface;
+    layers.buildings.visible=!!s.showSurface;
+    layers.transport.visible=!!s.showSurface;
+    layers.utilities.visible=!!s.showSurface;
+    layers.water.visible=!!s.showWater;
+    layers.labels.visible=!!s.showSurface && showLabels;
+    layers.sim.visible=engMode && !!s.showSurface;
+    layers.strata.visible=id!=='surface';
+    /* dim non-matching conceptual assets — show all strata group when not surface */
+    if(id==='surface'){ grid.visible=showGrid; axes.visible=$('showAxes')?.checked!==false; }
+    else { grid.visible=false; }
+    document.querySelectorAll('.strata-btn').forEach(b=>b.classList.toggle('active',b.dataset.strata===id));
+    document.querySelectorAll('#strataStack .strata-chip').forEach(c=>c.classList.toggle('current',c.dataset.sid===id));
+    if($('strataValue')) $('strataValue').textContent=s.label;
+    if($('strataHint')) $('strataHint').textContent='Active: '+s.name+' — '+s.hint;
+    if($('strataAltVal')) $('strataAltVal').textContent=s.alt+' · conceptual scale';
+    if($('statusText') && !engMode) $('statusText').textContent='Stratum · '+s.label;
+    toast('Domain: '+s.name);
+  }
+
+  const ENG={
+    version:'SDT-Eng-v1', datum:'MSL', currency:'EUR',
+    floodCurve:[[-1,0],[-0.2,0.02],[0,0.05],[0.5,0.18],[1.0,0.35],[1.5,0.55],[2.0,0.72],[2.5,0.86],[3.0,0.95]],
+    defaultThreshold:1.2,
+    energy:{baseCapacityMW:48, importLimitMW:22, lossFactor:0.07, renewableShare0:0.18, renewableShare1:0.62},
+    traffic:{arterialCap:2200, secondaryCap:900, peakFactor:1.35, disruptionFactor:0.45},
+    cost:{building:{capexPerVol:0.00085,opexRate:0.018},tank:{capexPerVol:0.0012,opexRate:0.025},tower:{capexPerVol:0.002,opexRate:0.03},crane:{capexPerVol:0.0015,opexRate:0.04},bridge:{capexPerVol:0.0011,opexRate:0.015},default:{capexPerVol:0.0009,opexRate:0.02}},
+    loadDensity:{building:0.035,tank:0.01,tower:0.05,crane:0.08,bridge:0.005,default:0.03},
+    scenarios:{'Baseline':{flood:1,energy:1,traffic:1,cost:1,renew:0},'Energy transition':{flood:1,energy:1.05,traffic:0.95,cost:1.12,renew:1},'Transport disruption':{flood:1,energy:1,traffic:0.42,cost:1.08,renew:0},'Flood stress test':{flood:1.55,energy:1.1,traffic:0.85,cost:1.25,renew:0},'Growth scenario':{flood:1.05,energy:1.35,traffic:1.4,cost:1.45,renew:0.4}}
+  };
+  function lerpCurve(curve,x){
+    if(x<=curve[0][0])return curve[0][1];
+    if(x>=curve[curve.length-1][0])return curve[curve.length-1][1];
+    for(let i=0;i<curve.length-1;i++){const [x0,y0]=curve[i],[x1,y1]=curve[i+1];if(x>=x0&&x<=x1){const u=(x-x0)/(x1-x0);return y0+u*(y1-y0);}}
+    return curve[curve.length-1][1];
+  }
+  function assetClass(o){const t=o.userData.type||'default';return ENG.cost[t]?t:'default';}
+  function assetVolume(o){return Math.max(0.1,o.scale.x*o.scale.y*o.scale.z);}
+  function assetCapex(o){return assetVolume(o)*ENG.cost[assetClass(o)].capexPerVol;}
+  function assetOpexAnnual(o){return assetCapex(o)*ENG.cost[assetClass(o)].opexRate;}
+  function assetLoadKW(o){return assetVolume(o)*(ENG.loadDensity[assetClass(o)]||ENG.loadDensity.default)*1000;}
+
+  const objects=[], objectMap=new Map(); let nextId=1;
+  const mats={ground:new THREE.MeshStandardMaterial({color:'#172a35',roughness:.92}),water:new THREE.MeshStandardMaterial({color:'#0c4966',metalness:.25,roughness:.34,transparent:true,opacity:.92}),road:new THREE.MeshStandardMaterial({color:'#334653',roughness:.85}),building:new THREE.MeshStandardMaterial({color:'#397b91',metalness:.2,roughness:.5}),highlight:new THREE.MeshStandardMaterial({color:'#ffc777',emissive:'#57320b',roughness:.4}),utility:new THREE.MeshStandardMaterial({color:'#e3ad5f',metalness:.4,roughness:.38})};
+  const grid=new THREE.GridHelper(220,110,'#2c819b','#183342'); grid.position.y=.05; world.add(grid);
+  const axes=new THREE.AxesHelper(9); axes.position.set(-48,.2,-48); world.add(axes);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,180),mats.ground); ground.rotation.x=-Math.PI/2; ground.position.y=-.2; ground.receiveShadow=true; layers.terrain.add(ground);
+  const basin=new THREE.Mesh(new THREE.PlaneGeometry(52,120),mats.water); basin.rotation.x=-Math.PI/2; basin.position.set(-32,.03,-5); basin.receiveShadow=true; layers.water.add(basin);
+  const canal=new THREE.Mesh(new THREE.PlaneGeometry(12,40),mats.water); canal.rotation.x=-Math.PI/2; canal.position.set(8,.02,48); layers.water.add(canal);
+  const parkMat=new THREE.MeshStandardMaterial({color:'#1a4a38',roughness:.95});
+  [[55,0,28,22],[62,-38,18,16],[18,52,20,14]].forEach(([x,z,w,d])=>{const p=new THREE.Mesh(new THREE.PlaneGeometry(w,d),parkMat);p.rotation.x=-Math.PI/2;p.position.set(x,.01,z);layers.terrain.add(p);});
+  function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.62,metalness:.12});}
+  function addObj(name,type,layer,pos,scale,color,desc='Illustrative GIS/BIM synthetic asset'){
+    let geom; if(type==='building')geom=new THREE.BoxGeometry(1,1,1); else if(type==='tank')geom=new THREE.CylinderGeometry(.5,.5,1,24); else if(type==='tower')geom=new THREE.CylinderGeometry(.18,.42,1,12); else if(type==='crane')geom=new THREE.BoxGeometry(1,1,1); else if(type==='bridge')geom=new THREE.BoxGeometry(1,1,1); else geom=new THREE.BoxGeometry(1,1,1);
+    const material=mat(color), mesh=new THREE.Mesh(geom,material); mesh.position.set(...pos); mesh.scale.set(...scale); mesh.castShadow=true; mesh.receiveShadow=true;
+    mesh.userData={id:nextId++,name,type,layer,description:desc,audit:{status:'Not assessed',confidence:50,note:''},baseColor:color,source:'synthetic-GIS-BIM'};
+    if(type==='crane'){const boom=new THREE.Mesh(new THREE.BoxGeometry(5,.18,.2),material);boom.position.set(1.8,.45,0);mesh.add(boom);const mast=new THREE.Mesh(new THREE.BoxGeometry(.18,3,.18),material);mast.position.set(-.8,1.4,0);mesh.add(mast);}
+    if(type==='bridge'){const deck=new THREE.Mesh(new THREE.BoxGeometry(1,.15,1),material);deck.position.set(0,.4,0);mesh.add(deck);}
+    layers[layer].add(mesh); objects.push(mesh); objectMap.set(mesh.userData.id,mesh); return mesh;
+  }
+  function road(x,z,w,d,rot=0){const m=new THREE.Mesh(new THREE.BoxGeometry(w,.12,d),mats.road);m.position.set(x,.03,z);m.rotation.y=rot;m.receiveShadow=true;layers.transport.add(m);}
+  road(-8,0,10,140); road(12,0,7,140); road(28,0,6,140); road(48,0,5,120);
+  road(12,-40,90,5); road(12,0,90,5); road(12,35,90,5); road(12,55,70,4); road(12,-55,70,4); road(35,-20,5,50,0);
+  const quay=new THREE.Mesh(new THREE.BoxGeometry(9,.7,130),mat('#596a73')); quay.position.set(-18,.3,-5); quay.castShadow=true; layers.transport.add(quay);
+  const names=[
+    ['North logistics hall','building','buildings',[5,5,-30],[14,10,11],'#438ca3'],
+    ['Cold storage unit','building','buildings',[22,4,-28],[9,8,9],'#3c7186'],
+    ['Intermodal warehouse','building','buildings',[8,5,18],[13,10,11],'#4e91a8'],
+    ['Operations centre','building','buildings',[30,6,18],[8,12,8],'#6aa5b8'],
+    ['Quay crane 01','crane','transport',[-18,3.2,-32],[1.2,6.5,1.2],'#e4b76b'],
+    ['Quay crane 02','crane','transport',[-18,3.2,-8],[1.2,6.5,1.2],'#e4b76b'],
+    ['Quay crane 03','crane','transport',[-18,3.2,16],[1.2,6.5,1.2],'#e4b76b'],
+    ['Fuel tank A','tank','utilities',[-6,2.2,-38],[4.2,4.4,4.2],'#bd975c'],
+    ['Fuel tank B','tank','utilities',[-6,2.2,-26],[4.2,4.4,4.2],'#bd975c'],
+    ['Mixed-use block A','building','buildings',[42,7,-32],[10,14,12],'#5a9fb8'],
+    ['Mixed-use block B','building','buildings',[58,5,-30],[9,10,10],'#4a8fa5'],
+    ['Office tower North','building','buildings',[48,12,-12],[8,24,8],'#7ab4c9'],
+    ['Residential mid-rise 1','building','buildings',[38,6,8],[9,12,8],'#6ba3b5'],
+    ['Residential mid-rise 2','building','buildings',[52,5,10],[8,10,9],'#5b93a5'],
+    ['Retail podium','building','buildings',[45,2.5,28],[14,5,10],'#4d8a9c'],
+    ['Hotel tower','building','buildings',[62,11,22],[7,22,7],'#8bc0d4'],
+    ['Civic centre','building','buildings',[22,4.5,42],[12,9,10],'#5aa0b2'],
+    ['School complex','building','buildings',[42,3.5,48],[14,7,11],'#4e92a4'],
+    ['Apartment block East','building','buildings',[68,7,-8],[9,14,9],'#6aacc0'],
+    ['Apartment block South','building','buildings',[58,6,42],[10,12,8],'#5a9cb0'],
+    ['Tech campus wing','building','buildings',[72,4,8],[11,8,12],'#4d8fa3'],
+    ['Power substation','building','utilities',[72,1.8,-28],[8,3.6,7],'#d7a75f'],
+    ['Communications mast','tower','utilities',[78,6,-18],[1.5,12,1.5],'#e6c47d'],
+    ['District energy plant','building','utilities',[68,3,-42],[10,6,8],'#c9a05a'],
+    ['Water treatment node','building','utilities',[5,2,52],[6,4,6],'#5ccca9'],
+    ['Emergency assembly point','building','buildings',[78,.6,48],[4,1.2,4],'#5ccca9'],
+    ['Canal bridge','bridge','transport',[8,1.2,48],[14,1.5,4],'#7a8a94']
+  ];
+  names.forEach(n=>addObj(...n));
+  const fabric=[[35,-48,7,5,8,'#457a8c'],[48,-50,6,4,7,'#3d6e80'],[62,-48,8,6,9,'#4a8294'],[18,-48,9,4,7,'#3a6a7c'],[5,-50,8,5,8,'#427888'],[78,28,6,8,7,'#4e8a9c'],[78,42,7,6,8,'#458294'],[28,62,8,4,9,'#3f7688'],[48,62,10,5,8,'#4a8496'],[68,58,7,5,7,'#427c8e'],[18,28,6,7,6,'#3d7082'],[-2,28,5,4,5,'#386878']];
+  fabric.forEach(([x,z,sx,sy,sz,col],i)=>addObj('Urban block '+String.fromCharCode(65+i),'building','buildings',[x,sy/2,z],[sx,sy,sz],col,'Procedural GIS footprint → LOD1 BIM massing'));
+
+  function labelFor(obj){
+    const c=document.createElement('canvas'); c.width=512; c.height=96; const x=c.getContext('2d');
+    x.fillStyle='rgba(4,15,23,.84)'; x.fillRect(0,0,512,96); x.strokeStyle='#5fcde8'; x.strokeRect(1,1,510,94);
+    x.fillStyle='#e8f8ff'; x.font='bold 28px system-ui'; x.fillText(obj.userData.name,12,58);
+    const tex=new THREE.CanvasTexture(c); const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+    sprite.scale.set(10,1.9,1); sprite.position.set(0,obj.scale.y/2+2,0); sprite.userData.labelFor=obj.userData.id; layers.labels.add(sprite); obj.userData.labelSprite=sprite;
+  }
+  objects.filter(o=>!o.userData.name.startsWith('Urban block')).forEach(labelFor);
+
+  function assignPhases(){
+    objects.forEach((o,i)=>{
+      const n=o.userData.name||'';
+      let phase=20;
+      if(/Quay crane|Fuel tank|Power substation|quay|Logistics|Cold storage|Intermodal|Operations/i.test(n)) phase=5+i%10;
+      else if(/Urban block/i.test(n)) phase=35+(i%40);
+      else if(/Residential|Apartment|Retail|Mixed-use/i.test(n)) phase=25+(i%30);
+      else if(/Office tower|Hotel|Tech campus/i.test(n)) phase=45+(i%25);
+      else if(/Civic|School|Emergency|bridge|Communications|District energy|Water treatment/i.test(n)) phase=15+(i%20);
+      else phase=10+(i%50);
+      o.userData.phase=phase; o.userData.baseScaleY=o.scale.y; o.userData.baseY=o.position.y;
+      o.userData.threshold=ENG.defaultThreshold+(o.position.y*0.05)+((o.userData.layer==='utilities')?0.3:0);
+      o.userData.capexM=assetCapex(o); o.userData.opexM=assetOpexAnnual(o); o.userData.loadKW=assetLoadKW(o);
+    });
+  }
+  assignPhases();
+
+  const dataProvenance={source:'synthetic demo',crs:'local scene units',features:0,fetchedAt:null,license:'demo',notes:[]};
+  function setProvenance(p){
+    Object.assign(dataProvenance,p);
+    const box=$('provenanceBox');
+    if(box) box.innerHTML=`<strong style="color:var(--cyan)">Data provenance</strong><br>Source: ${dataProvenance.source}<br>CRS: ${dataProvenance.crs}<br>Features: ${dataProvenance.features}${dataProvenance.fetchedAt?'<br>Fetched: '+dataProvenance.fetchedAt:''}${dataProvenance.license?'<br>License: '+dataProvenance.license:''}${(dataProvenance.notes||[]).length?'<br>'+dataProvenance.notes.join('<br>'):''}`;
+    if($('statusText')) $('statusText').textContent=(dataProvenance.source||'data')+' · '+(dataProvenance.features||0)+' feat';
+  }
+  function clearMassing(keepInfrastructure=false){
+    const remove=[];
+    objects.forEach(o=>{
+      if(keepInfrastructure&&(o.userData.layer==='utilities'||o.userData.type==='crane'||o.userData.type==='bridge')) return;
+      if(o.userData.layer==='buildings'||o.userData.source?.includes('OSM')||o.userData.source?.includes('GeoJSON')||o.userData.source?.includes('glTF')||o.userData.name?.startsWith('Urban block')) remove.push(o);
+    });
+    remove.forEach(o=>{
+      layers[o.userData.layer]?.remove(o);
+      const i=objects.indexOf(o); if(i>=0) objects.splice(i,1);
+      objectMap.delete(o.userData.id);
+      const spr=layers.labels.children.find(s=>s.userData.labelFor===o.userData.id); if(spr) layers.labels.remove(spr);
+    });
+    for(let i=floodOverlays.length-1;i>=0;i--){const f=floodOverlays[i]; if(!objectMap.has(f.userData.forId)){layers.sim.remove(f);floodOverlays.splice(i,1);}}
+  }
+  function projectLonLat(lon,lat,originLon,originLat,scale=85000){
+    const x=(lon-originLon)*scale*Math.cos(originLat*Math.PI/180); const z=-(lat-originLat)*scale; return [x,z];
+  }
+  function ringToShape(ring,originLon,originLat){
+    const shape=new THREE.Shape();
+    ring.forEach((c,i)=>{const [x,z]=projectLonLat(c[0],c[1],originLon,originLat); if(i===0) shape.moveTo(x,z); else shape.lineTo(x,z);});
+    return shape;
+  }
+  function addExtrudedFootprint(name,coords,props,originLon,originLat,source){
+    try{
+      const outer=coords[0]; if(!outer||outer.length<3) return null;
+      const shape=ringToShape(outer,originLon,originLat);
+      for(let h=1;h<coords.length;h++){const hole=ringToShape(coords[h],originLon,originLat); shape.holes.push(hole);}
+      const levels=parseFloat(props['building:levels']||props.levels||0);
+      const heightM=parseFloat(props.height||props['building:height']||0)||(levels?levels*3.2:9);
+      const geom=new THREE.ExtrudeGeometry(shape,{depth:Math.max(2,heightM),bevelEnabled:false}); geom.rotateX(-Math.PI/2);
+      const color=props.color||'#5a9fb8'; const material=mat(color); const mesh=new THREE.Mesh(geom,material);
+      mesh.castShadow=true; mesh.receiveShadow=true;
+      mesh.userData={id:nextId++,name:name||props.name||props['addr:housenumber']||('Building '+nextId),type:'building',layer:'buildings',description:props['building']||'GIS footprint',audit:{status:'Not assessed',confidence:70,note:source},baseColor:color,source,props,phase:15+Math.floor(Math.random()*50)};
+      mesh.geometry.computeBoundingBox();
+      const bb=mesh.geometry.boundingBox; const cx=(bb.min.x+bb.max.x)/2, cz=(bb.min.z+bb.max.z)/2;
+      mesh.geometry.translate(-cx,-bb.min.y,-cz); mesh.position.set(cx,0,cz); mesh.scale.set(1,1,1);
+      mesh.userData.baseScaleY=Math.max(2,heightM); mesh.userData.baseY=0;
+      layers.buildings.add(mesh); objects.push(mesh); objectMap.set(mesh.userData.id,mesh); return mesh;
+    }catch(err){console.warn('extrude fail',err); return null;}
+  }
+  function loadGeoJSONFeatures(gj,meta={}){
+    const features=gj.type==='FeatureCollection'?gj.features:(gj.type==='Feature'?[gj]:[]);
+    let originLon=meta.originLon, originLat=meta.originLat;
+    if(originLon==null||originLat==null){
+      for(const f of features){const g=f.geometry; if(!g) continue; const c=g.type==='Polygon'?g.coordinates[0][0]:g.type==='MultiPolygon'?g.coordinates[0][0][0]:null; if(c){originLon=c[0];originLat=c[1];break;}}
+    }
+    if(originLon==null){toast('GeoJSON: no coordinates'); return 0;}
+    let n=0;
+    features.forEach(f=>{
+      const g=f.geometry, p=f.properties||{}; if(!g) return;
+      if(g.type==='Polygon'){if(addExtrudedFootprint(p.name||p['addr:street'],g.coordinates,p,originLon,originLat,meta.source||'GeoJSON')) n++;}
+      else if(g.type==='MultiPolygon'){g.coordinates.forEach((poly,i)=>{if(addExtrudedFootprint((p.name||'Building')+' '+(i+1),poly,p,originLon,originLat,meta.source||'GeoJSON')) n++;});}
+    });
+    return n;
+  }
+  async function fetchOSMBuildings(lat,lon,delta=0.012){
+    toast('Fetching OpenStreetMap buildings…');
+    const south=lat-delta, north=lat+delta, west=lon-delta, east=lon+delta;
+    const query=`[out:json][timeout:60];(way["building"](${south},${west},${north},${east});relation["building"](${south},${west},${north},${east}););out body;>;out skel qt;`;
+    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:query,headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+    if(!res.ok) throw new Error('Overpass HTTP '+res.status);
+    const data=await res.json();
+    const nodes={}; data.elements.filter(e=>e.type==='node').forEach(n=>{nodes[n.id]=[n.lon,n.lat];});
+    const features=[];
+    data.elements.filter(e=>e.type==='way'&&e.tags?.building).forEach(w=>{
+      const coords=(w.nodes||[]).map(id=>nodes[id]).filter(Boolean);
+      if(coords.length<3) return;
+      if(coords[0][0]!==coords[coords.length-1][0]||coords[0][1]!==coords[coords.length-1][1]) coords.push(coords[0]);
+      features.push({type:'Feature',properties:{...w.tags,osm_id:w.id,name:w.tags.name||w.tags['addr:housenumber']||('OSM '+w.id)},geometry:{type:'Polygon',coordinates:[coords]}});
+    });
+    clearMassing(false);
+    objects.slice().forEach(o=>{
+      if(o.userData.layer==='buildings'){layers.buildings.remove(o); objects.splice(objects.indexOf(o),1); objectMap.delete(o.userData.id);
+        const spr=layers.labels.children.find(s=>s.userData.labelFor===o.userData.id); if(spr) layers.labels.remove(spr);}
+    });
+    const n=loadGeoJSONFeatures({type:'FeatureCollection',features},{originLon:lon,originLat:lat,source:'OpenStreetMap Overpass'});
+    assignPhases();
+    floodOverlays.splice(0).forEach(f=>layers.sim.remove(f)); initFloodOverlays();
+    objects.filter(o=>o.userData.source?.includes('OpenStreetMap')).slice(0,40).forEach(labelFor);
+    updateObjectList(); $('objectCount').textContent=objects.length;
+    setProvenance({source:`OpenStreetMap (${lat.toFixed(4)}, ${lon.toFixed(4)})`,crs:'EPSG:4326 → local tangent',features:n,fetchedAt:new Date().toISOString().slice(0,19)+'Z',license:'ODbL © OpenStreetMap contributors',notes:[`bbox Δ≈${delta}°`,'LOD1 extrusion from footprints']});
+    camera.position.set(80,60,90); controls.target.set(0,0,0); controls.update();
+    toast(`OSM: loaded ${n} buildings`); return n;
+  }
+  function rebuildAfterImport(sourceLabel,count){
+    assignPhases();
+    floodOverlays.splice(0).forEach(f=>layers.sim.remove(f)); initFloodOverlays();
+    objects.filter(o=>o.userData.source===sourceLabel||o.userData.source?.includes(sourceLabel)).slice(0,50).forEach(o=>{if(!o.userData.labelSprite) labelFor(o);});
+    updateObjectList(); $('objectCount').textContent=objects.length;
+    if(engMode) runEngineeringSim(+$('timeStep').value);
+  }
+
+  function computeEngineering(t){
+    const demand=(+$('demand').value||100)/100;
+    const stress=(+$('stress').value||0)/100;
+    const wl=+$('waterLevel').value||0;
+    const discount=(Number($('discountRate')?.value??5))/100;
+    const preset=$('scenarioPreset').value;
+    const sc=ENG.scenarios[preset]||ENG.scenarios.Baseline;
+    const do4d=$('sim4d')?.checked!==false;
+    const inundation=lerpCurve(ENG.floodCurve,wl*sc.flood);
+    const waterSurface=Math.max(0,wl*sc.flood);
+    let floodedAssets=0, floodDamageM=0;
+    const floodDetails=[];
+    objects.forEach(o=>{
+      const freeboard=(o.userData.threshold??ENG.defaultThreshold)-waterSurface;
+      const depth=Math.max(0,waterSurface-(o.userData.threshold??ENG.defaultThreshold)*0.5);
+      const atRisk=freeboard<0.3;
+      if(atRisk&&(o.userData.phase??0)<=t){floodedAssets++; const dmg=o.userData.capexM*Math.min(0.85,0.15+depth*0.25)*sc.cost; floodDamageM+=dmg; floodDetails.push({id:o.userData.id,name:o.userData.name,freeboard:+freeboard.toFixed(2),depth:+depth.toFixed(2),damageM:+dmg.toFixed(3)});}
+    });
+    let loadMW=0, onlineAssets=0;
+    objects.forEach(o=>{const phase=o.userData.phase??0; if(do4d&&t<phase) return; onlineAssets++; loadMW+=(o.userData.loadKW||0)/1000;});
+    loadMW*=demand*sc.energy*(1+stress*0.25);
+    const renewShare=ENG.energy.renewableShare0+(ENG.energy.renewableShare1-ENG.energy.renewableShare0)*Math.min(1,t/100)*(sc.renew?1:0.25);
+    const localGen=ENG.energy.baseCapacityMW*(0.55+0.45*renewShare);
+    const importNeed=Math.max(0,loadMW*(1+ENG.energy.lossFactor)-localGen);
+    const importUsed=Math.min(importNeed,ENG.energy.importLimitMW);
+    const unserved=Math.max(0,importNeed-importUsed);
+    const energyMargin=((localGen+ENG.energy.importLimitMW)-loadMW)/(localGen+ENG.energy.importLimitMW);
+    const baseFlow=ENG.traffic.arterialCap*0.55+ENG.traffic.secondaryCap*0.4;
+    const flow=baseFlow*demand*sc.traffic*ENG.traffic.peakFactor*(1-stress*0.2);
+    const capacity=ENG.traffic.arterialCap+ENG.traffic.secondaryCap*0.5;
+    const vcr=flow/Math.max(1,capacity);
+    const los=vcr<0.6?'A/B':vcr<0.8?'C':vcr<1.0?'D':vcr<1.2?'E':'F';
+    let capexSpent=0, capexTotal=0, opexAccrued=0;
+    objects.forEach(o=>{
+      const phase=o.userData.phase??0; const cx=o.userData.capexM||0; const ox=o.userData.opexM||0;
+      capexTotal+=cx*sc.cost;
+      if(t>=phase){const progress=do4d?Math.min(1,Math.max(0,(t-phase)/12)):1; capexSpent+=cx*sc.cost*progress; const monthsOnline=Math.max(0,t-phase-12); opexAccrued+=ox*sc.cost*(monthsOnline/12);}
+    });
+    const remainingCapex=Math.max(0,capexTotal-capexSpent);
+    const opex10y=objects.reduce((s,o)=>s+(o.userData.opexM||0)*sc.cost,0)*10;
+    const npv=capexSpent+remainingCapex/Math.pow(1+discount,Math.max(0.1,(100-t)/12))+opex10y/Math.pow(1+discount,5)+floodDamageM;
+    const riskIndex=Math.min(100,Math.round(inundation*35+Math.max(0,-energyMargin)*40+Math.max(0,vcr-0.8)*30+(floodedAssets/Math.max(1,objects.length))*40));
+    lastResults={t,preset,demand,stress,wl,discount,
+      flood:{waterSurface:+waterSurface.toFixed(2),inundation:+inundation.toFixed(3),floodedAssets,damageM:+floodDamageM.toFixed(2),details:floodDetails.slice(0,20)},
+      energy:{loadMW:+loadMW.toFixed(2),localGen:+localGen.toFixed(2),importUsed:+importUsed.toFixed(2),unserved:+unserved.toFixed(2),renewShare:+(renewShare*100).toFixed(1),margin:+(energyMargin*100).toFixed(1)},
+      traffic:{flow:+flow.toFixed(0),capacity:+capacity.toFixed(0),vcr:+vcr.toFixed(2),los},
+      construction:{onlineAssets,total:objects.length,progress:+(onlineAssets/Math.max(1,objects.length)*100).toFixed(1)},
+      cost:{capexSpent:+capexSpent.toFixed(2),capexTotal:+capexTotal.toFixed(2),opexAccrued:+opexAccrued.toFixed(2),floodDamageM:+floodDamageM.toFixed(2),npv:+npv.toFixed(2),currency:ENG.currency},
+      riskIndex,model:ENG.version,timestamp:new Date().toISOString()};
+    resultsHistory.push({t,riskIndex,loadMW:lastResults.energy.loadMW,flow:lastResults.traffic.flow,capexSpent:lastResults.cost.capexSpent,damageM:lastResults.flood.damageM});
+    if(resultsHistory.length>120) resultsHistory.shift();
+    return lastResults;
+  }
+
+  function initFlowParticles(){
+    const geom=new THREE.SphereGeometry(.35,8,8);
+    const cols=['#6de4ff','#3e9fff','#ffc777','#6ef0c2'];
+    const paths=[{x:-8,zMin:-60,zMax:60,vx:0,vz:1},{x:12,zMin:-60,zMax:60,vx:0,vz:-1},{x:28,zMin:-55,zMax:55,vx:0,vz:1},{xMin:-20,xMax:70,z:0,vx:1,vz:0},{xMin:-20,xMax:70,z:35,vx:-1,vz:0}];
+    for(let i=0;i<48;i++){
+      const p=paths[i%paths.length];
+      const m=new THREE.Mesh(geom,new THREE.MeshBasicMaterial({color:cols[i%cols.length],transparent:true,opacity:.85}));
+      const t=Math.random();
+      if(p.zMin!=null){m.position.set(p.x,.6,p.zMin+t*(p.zMax-p.zMin)); m.userData={axis:'z',min:p.zMin,max:p.zMax,dir:p.vz,speed:.15+Math.random()*.25};}
+      else{m.position.set(p.xMin+t*(p.xMax-p.xMin),.6,p.z); m.userData={axis:'x',min:p.xMin,max:p.xMax,dir:p.vx,speed:.15+Math.random()*.25};}
+      m.visible=false; layers.sim.add(m); flowParticles.push(m);
+    }
+  }
+  function initFloodOverlays(){
+    objects.filter(o=>o.userData.layer==='buildings').forEach(o=>{
+      const foot=new THREE.Mesh(new THREE.PlaneGeometry(Math.max(o.scale.x*1.05,.5),Math.max(o.scale.z*1.05,.5)),new THREE.MeshBasicMaterial({color:'#ff7188',transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+      foot.rotation.x=-Math.PI/2; foot.position.set(o.position.x,.08,o.position.z);
+      foot.userData={forId:o.userData.id,baseY:o.userData.baseY||o.position.y}; foot.visible=false; layers.sim.add(foot); floodOverlays.push(foot);
+    });
+  }
+  initFlowParticles(); initFloodOverlays();
+
+  function updateKPIPanel(R){
+    if(!R) return;
+    const f=R.flood,e=R.energy,tr=R.traffic,c=R.cost,co=R.construction;
+    if($('kpiFlood')) $('kpiFlood').textContent=`WS ${f.waterSurface} m · inundation ${(f.inundation*100).toFixed(0)}% · assets at risk ${f.floodedAssets} · damage ${f.damageM} M€`;
+    if($('kpiEnergy')) $('kpiEnergy').textContent=`Load ${e.loadMW} MW · gen ${e.localGen} MW · import ${e.importUsed} MW · unserved ${e.unserved} MW · margin ${e.margin}% · RES ${e.renewShare}%`;
+    if($('kpiTraffic')) $('kpiTraffic').textContent=`${tr.flow} pcu/h · cap ${tr.capacity} · V/C ${tr.vcr} · LOS ${tr.los}`;
+    if($('kpi4d')) $('kpi4d').textContent=`Online ${co.onlineAssets}/${co.total} (${co.progress}%) · T+${String(R.t).padStart(2,'0')}`;
+    if($('kpi5d')) $('kpi5d').textContent=`CAPEX spent ${c.capexSpent} / ${c.capexTotal} M€ · OPEX ${c.opexAccrued} M€ · flood dmg ${c.floodDamageM} M€ · NPV≈ ${c.npv} M€`;
+    if($('kpiRisk')) $('kpiRisk').textContent=`${R.riskIndex} / 100 · ${R.riskIndex>65?'CRITICAL':R.riskIndex>40?'ELEVATED':'STABLE'}`;
+    if($('phaseInfo')) $('phaseInfo').textContent=`T+${R.t} · risk ${R.riskIndex} · load ${e.loadMW} MW · V/C ${tr.vcr} · CAPEX ${c.capexSpent} M€`;
+    if($('modelMeta')) $('modelMeta').textContent=`Model ${R.model} · ${R.preset} · dataset synthetic-calibrated · ${R.timestamp.slice(0,19)}`;
+  }
+
+  function runEngineeringSim(t){
+    if(!engMode) return;
+    const R=computeEngineering(t);
+    const doFlood=$('simFlood').checked, doEnergy=$('simEnergy').checked, doFlows=$('simFlows').checked, do4d=$('sim4d').checked;
+    const waterSurface=R.flood.waterSurface; const flowMul=Math.max(0.05,R.traffic.vcr);
+    basin.position.y=.03+Math.max(0,waterSurface)*.85;
+    if(canal) canal.position.y=.02+Math.max(0,waterSurface)*.45;
+    basin.material.color.set(waterSurface>1.5?'#7c4a53':waterSurface>.5?'#1a6a88':'#0c4966');
+    objects.forEach(o=>{
+      const phase=o.userData.phase??0; const baseSy=o.userData.baseScaleY??o.scale.y;
+      if(do4d){
+        if(t<phase){o.visible=false; if(o.userData.labelSprite) o.userData.labelSprite.visible=false;}
+        else{o.visible=true; const grow=Math.min(1,(t-phase)/12); o.scale.y=Math.max(.12,baseSy*grow);
+          if(o.userData.type==='building'||o.userData.type==='tank') o.position.y=o.scale.y/2; else o.position.y=(o.userData.baseY??o.position.y);
+          if(o.userData.labelSprite){o.userData.labelSprite.visible=showLabels; o.userData.labelSprite.position.y=o.scale.y/2+2;}}
+      }else{
+        o.visible=true; o.scale.y=baseSy;
+        if(o.userData.type==='building'||o.userData.type==='tank') o.position.y=baseSy/2;
+        else if(o.userData.baseY!=null) o.position.y=o.userData.baseY;
+        if(o.userData.labelSprite) o.userData.labelSprite.visible=showLabels;
+      }
+    });
+    floodOverlays.forEach(f=>{
+      const obj=objectMap.get(f.userData.forId); if(!obj||!doFlood){f.visible=false; return;}
+      const thr=obj.userData.threshold??ENG.defaultThreshold; const depth=Math.max(0,waterSurface-thr*0.5);
+      f.visible=depth>0.05&&obj.visible; f.material.opacity=Math.min(.8,depth*0.35); f.position.y=.08+Math.min(waterSurface*.25,.9);
+    });
+    const margin=R.energy.margin/100;
+    objects.filter(o=>o.userData.layer==='utilities').forEach(o=>{
+      if(!doEnergy){o.material.emissive.set('#000000'); o.material.emissiveIntensity=0; return;}
+      const load=Math.min(1,Math.max(0,0.3-margin)+R.energy.unserved/20);
+      o.material.emissive.set(load>.55?'#ff3344':load>.25?'#ffc777':'#2a8a5a'); o.material.emissiveIntensity=.25+load*1.5;
+    });
+    flowParticles.forEach(p=>{
+      p.visible=!!(doFlows&&flowMul>.08); if(!p.visible) return;
+      const u=p.userData; const spd=u.speed*Math.min(2.2,flowMul*1.2)*playSpeed;
+      if(u.axis==='z'){p.position.z+=u.dir*spd; if(p.position.z>u.max) p.position.z=u.min; if(p.position.z<u.min) p.position.z=u.max;}
+      else{p.position.x+=u.dir*spd; if(p.position.x>u.max) p.position.x=u.min; if(p.position.x<u.min) p.position.x=u.max;}
+    });
+    updateKPIPanel(R);
+    $('scenarioValue').textContent=R.preset+' · 5D';
+    if($('statusText')) $('statusText').textContent=`5D ENG · risk ${R.riskIndex} · ${R.energy.loadMW} MW`;
+  }
+
+  const raycaster=new THREE.Raycaster(), pointer=new THREE.Vector2(); let downX=0, downY=0;
+  function setSelected(obj){
+    if(selected&&selected.material&&selected.material.emissive) selected.material.emissive.set('#000000');
+    selected=obj;
+    if(obj){
+      obj.material.emissive?.set('#183c4b');
+      $('auditName').textContent=obj.userData.name; $('propName').textContent=obj.userData.name; $('propLabel').value=obj.userData.name;
+      $('posX').value=obj.position.x.toFixed(2); $('posY').value=obj.position.y.toFixed(2); $('posZ').value=obj.position.z.toFixed(2);
+      $('heightProp').value=obj.scale.y; $('heightVal').textContent=obj.scale.y.toFixed(1);
+      $('colorProp').value='#'+obj.material.color.getHexString();
+      $('auditStatus').value=obj.userData.audit.status; $('confidence').value=obj.userData.audit.confidence;
+      $('confidenceVal').textContent=obj.userData.audit.confidence+'% · illustrative'; $('auditNote').value=obj.userData.audit.note;
+    }else{$('auditName').textContent='Nothing selected'; $('propName').textContent='Select an object in the scene';}
+  }
+  function updateObjectList(){
+    const el=$('objectList'); el.innerHTML='';
+    objects.forEach(o=>{const b=document.createElement('button'); b.className='wb-btn'; b.style.textAlign='left'; b.textContent='◈ '+o.userData.name;
+      b.onclick=()=>{setSelected(o); controls.target.copy(o.position); openPanel('propertiesPanel');}; el.appendChild(b);});
+  }
+  function openPanel(id){
+    document.querySelectorAll('#workbench .panel').forEach(p=>p.classList.toggle('open',p.id===id));
+    document.querySelectorAll('#workbench [data-panel]').forEach(b=>b.classList.toggle('active',b.dataset.panel===id));
+  }
+  document.querySelectorAll('#workbench [data-panel]').forEach(b=>b.addEventListener('click',()=>openPanel(b.dataset.panel)));
+  document.querySelectorAll('#workbench [data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).classList.remove('open')));
+  document.querySelectorAll('#workbench [data-tool]').forEach(b=>b.addEventListener('click',()=>{
+    mode=b.dataset.tool; document.querySelectorAll('#workbench [data-tool]').forEach(x=>x.classList.toggle('active',x===b));
+    $('modeValue').textContent=({select:'Select / Inspect',move:'Move object',rotate:'Rotate object',scale:'Scale object',measure:'Measure distance',annotate:'Add annotation'})[mode];
+    toast(mode==='measure'?'Click two points to measure.':mode==='annotate'?'Click the scene to add a note marker.':mode==='select'?'Click an object to inspect it.':'Select an object, then drag to edit.');
+  }));
+  function toast(s){const t=$('toast'); t.textContent=s; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400);}
+  let measurePoint=null;
+  canvas.addEventListener('pointerdown',e=>{downX=e.clientX; downY=e.clientY;});
+  canvas.addEventListener('pointerup',e=>{
+    if(Math.hypot(e.clientX-downX,e.clientY-downY)>4) return;
+    const r=canvas.getBoundingClientRect();
+    pointer.x=((e.clientX-r.left)/r.width)*2-1; pointer.y=-((e.clientY-r.top)/r.height)*2+1;
+    raycaster.setFromCamera(pointer,camera);
+    const hits=raycaster.intersectObjects(objects,true);
+    let hit=hits.find(h=>h.object.userData.id||h.object.parent?.userData.id);
+    let obj=hit?.object; while(obj&&!obj.userData.id) obj=obj.parent;
+    if(mode==='measure'){
+      const plane=new THREE.Plane(new THREE.Vector3(0,1,0),0), p=new THREE.Vector3();
+      raycaster.ray.intersectPlane(plane,p);
+      if(measurePoint){toast('Planar distance: '+measurePoint.distanceTo(p).toFixed(2)+' scene units'); measurePoint=null;}
+      else{measurePoint=p; toast('First point recorded. Select the second point.');}
+      return;
+    }
+    if(mode==='annotate'){
+      if(hit){const note=prompt('Annotation text:','Review this asset'); if(note){const marker=new THREE.Mesh(new THREE.SphereGeometry(.45,12,12),new THREE.MeshBasicMaterial({color:'#ffc777'})); marker.position.copy(hit.point); layers.labels.add(marker); marker.userData.annotation=note; toast('Annotation added.');}}
+      else toast('Click an asset to place an annotation.');
+      return;
+    }
+    if(obj){setSelected(obj); if(mode==='move'||mode==='rotate'||mode==='scale') toast(mode+' mode — use Object Properties for precise edits'); else openPanel('auditPanel');}
+    else if(mode==='select') setSelected(null);
+  });
+
+  $('sensitivity').addEventListener('input',e=>{sensitivity=+e.target.value; controls.rotateSpeed=sensitivity; controls.panSpeed=sensitivity;});
+  $('sceneScale').addEventListener('input',e=>{sceneScale=+e.target.value; world.scale.setScalar(sceneScale);});
+  $('cameraPreset').addEventListener('change',e=>{
+    const v=e.target.value;
+    if(v==='top'){camera.position.set(20,140,.01); controls.target.set(20,0,0);}
+    else if(v==='port'){camera.position.set(-55,32,20); controls.target.set(-10,0,0);}
+    else if(v==='city'){camera.position.set(55,38,55); controls.target.set(50,5,15);}
+    else if(v==='close'){camera.position.set(35,22,35); controls.target.set(30,4,10);}
+    else{camera.position.set(72,55,85); controls.target.set(15,0,0);}
+    controls.update();
+  });
+  $('gridBtn').onclick=()=>{showGrid=!showGrid; grid.visible=showGrid;};
+  $('labelsBtn').onclick=()=>{showLabels=!showLabels; layers.labels.visible=showLabels;};
+  $('wireBtn').onclick=()=>{wireframe=!wireframe; objects.forEach(o=>o.material.wireframe=wireframe);};
+  document.querySelectorAll('#workbench [data-layer]').forEach(c=>c.addEventListener('change',()=>{layers[c.dataset.layer].visible=c.checked; updateLayerCount();}));
+  $('allLayers').onclick=()=>{document.querySelectorAll('#workbench [data-layer]').forEach(c=>{c.checked=true; layers[c.dataset.layer].visible=true;}); updateLayerCount();};
+  function updateLayerCount(){const n=[...document.querySelectorAll('#workbench [data-layer]')].filter(c=>c.checked).length; $('layerCount').textContent=n+' / 6';}
+
+  /* Vertical domains · strata */
+  document.querySelectorAll('.strata-btn').forEach(b=>b.addEventListener('click',()=>{
+    applyStrata(b.dataset.strata);
+  }));
+  $('strataApply')?.addEventListener('click',()=>{
+    applyStrata(currentStrata);
+    openPanel('strataPanel');
+  });
+  $('strataShowAll')?.addEventListener('click',()=>{
+    layers.strata.visible=true;
+    layers.terrain.visible=true; layers.buildings.visible=true; layers.transport.visible=true;
+    layers.utilities.visible=true; layers.water.visible=true;
+    scene.background.set('#04070d'); scene.fog.density=0.006;
+    camera.position.set(100,90,120); controls.target.set(10,10,0); controls.maxDistance=800; controls.update();
+    toast('Stack overview — all conceptual domains visible');
+  });
+  $('strataAltitude')?.addEventListener('input',e=>{
+    const v=+e.target.value;
+    const order=['undercity','subterra','abyss','surface','airspace','leo','lunar','solar','planetary','deepspace'];
+    const idx=Math.min(order.length-1,Math.floor(v/10));
+    if(order[idx]!==currentStrata) applyStrata(order[idx]);
+    if($('strataAltVal')) $('strataAltVal').textContent=(STRATA[order[idx]]?.alt||'')+' · slider '+v+'%';
+  });
+  $('confidence').oninput=e=>$('confidenceVal').textContent=e.target.value+'% · illustrative';
+  $('saveAudit').onclick=()=>{if(!selected) return toast('Select an object first.'); selected.userData.audit={status:$('auditStatus').value,confidence:+$('confidence').value,note:$('auditNote').value}; toast('Audit attributes saved.');};
+  $('heightProp').oninput=e=>$('heightVal').textContent=(+e.target.value).toFixed(1);
+  $('applyProps').onclick=()=>{
+    if(!selected) return toast('Select an object first.');
+    selected.userData.name=$('propLabel').value||selected.userData.name;
+    selected.position.set(+$('posX').value,Math.max(0,+$('posY').value),+$('posZ').value);
+    const h=+$('heightProp').value; selected.scale.y=h; selected.material.color.set($('colorProp').value); selected.userData.baseColor=$('colorProp').value;
+    const spr=layers.labels.children.find(s=>s.userData.labelFor===selected.userData.id);
+    if(spr){spr.position.copy(selected.position).add(new THREE.Vector3(0,h/2+1.7,0)); const tx=spr.material.map; const c=tx.image.getContext('2d'); c.clearRect(0,0,512,96); c.fillStyle='rgba(4,15,23,.84)'; c.fillRect(0,0,512,96); c.strokeStyle='#5fcde8'; c.strokeRect(1,1,510,94); c.fillStyle='#e8f8ff'; c.font='bold 30px system-ui'; c.fillText(selected.userData.name,15,59); tx.needsUpdate=true;}
+    setSelected(selected); updateObjectList(); toast('Object properties updated.');
+  };
+  $('deleteObj').onclick=()=>{
+    if(!selected) return toast('Select an object first.');
+    const id=selected.userData.id; layers[selected.userData.layer].remove(selected); objects.splice(objects.indexOf(selected),1); objectMap.delete(id);
+    const spr=layers.labels.children.find(s=>s.userData.labelFor===id); if(spr) layers.labels.remove(spr);
+    setSelected(null); updateObjectList(); $('objectCount').textContent=objects.length; toast('Object removed.');
+  };
+  $('scenarioPreset').onchange=e=>{$('scenarioValue').textContent=e.target.value+(engMode?' · 5D':''); if(engMode) runEngineeringSim(+$('timeStep').value);};
+  $('demand').oninput=e=>{$('demandVal').textContent=e.target.value+'%'; if(engMode) runEngineeringSim(+$('timeStep').value);};
+  $('stress').oninput=e=>{$('stressVal').textContent=e.target.value+' / 100'; if(engMode) runEngineeringSim(+$('timeStep').value);};
+  $('waterLevel').oninput=e=>{$('waterVal').textContent=(+e.target.value).toFixed(1)+' m'; if(engMode) runEngineeringSim(+$('timeStep').value);};
+  if($('discountRate')) $('discountRate').oninput=e=>{$('discountVal').textContent=(+e.target.value).toFixed(1)+'%'; if(engMode) runEngineeringSim(+$('timeStep').value);};
+  ['simFlood','simEnergy','simFlows','sim4d','sim5d'].forEach(id=>{const el=$(id); if(el) el.onchange=()=>{if(engMode) runEngineeringSim(+$('timeStep').value);};});
+  $('engMode').onchange=e=>{
+    engMode=e.target.checked;
+    $('engModeHint').textContent=engMode?'On: 5D engine — flood curve, energy balance (MW), traffic V/C, CAPEX/OPEX/NPV, 4D phases.':'Off: visual parameters only. 5D engine inactive.';
+    layers.sim.visible=engMode;
+    if(!engMode){
+      timePlaying=false; if($('timePlay')) $('timePlay').textContent='▶ Play 4D/5D';
+      flowParticles.forEach(p=>p.visible=false); floodOverlays.forEach(f=>f.visible=false);
+      objects.forEach(o=>{o.visible=true; const by=o.userData.baseScaleY; if(by!=null){o.scale.y=by; if(o.userData.type==='building'||o.userData.type==='tank') o.position.y=by/2;} o.material.emissive?.set('#000000'); o.material.emissiveIntensity=0;});
+      basin.position.y=.03; basin.material.color.set('#0c4966');
+      $('scenarioValue').textContent=$('scenarioPreset').value;
+      if($('statusText')) $('statusText').textContent='GIS+BIM concept · synthetic';
+      toast('5D Engineering engine OFF');
+    }else{runEngineeringSim(+$('timeStep').value); toast('5D Engineering ON'); openPanel('resultsPanel');}
+  };
+  $('applyScenario').onclick=()=>{
+    if(!engMode){
+      const stress=+$('stress').value, wl=+$('waterLevel').value;
+      basin.position.y=.03+wl; basin.material.color.set(stress>60?'#7c4a53':'#0c4966');
+      objects.filter(o=>o.userData.layer==='utilities').forEach(o=>o.material.emissive.set(stress>60?'#64242a':'#000000'));
+      $('scenarioValue').textContent=$('scenarioPreset').value;
+      toast('Visual-only. Enable 5D Engineering engine for calculation.');
+    }else{runEngineeringSim(+$('timeStep').value); openPanel('resultsPanel'); toast('Engineering step «'+$('scenarioPreset').value+'» · see KPIs');}
+  };
+  function updateTimeLabel(){
+    const t=+$('timeStep').value;
+    const phases=['Site prep','Foundations','Port shell','City core','Vertical growth','Fit-out','Operations'];
+    const pi=Math.min(phases.length-1,Math.floor(t/15));
+    $('timeVal').textContent='T+'+String(t).padStart(2,'0')+' · '+phases[pi]+(engMode?' · 5D':'');
+    if(engMode) runEngineeringSim(t);
+  }
+  $('timeStep').oninput=updateTimeLabel;
+  $('timePrev').onclick=()=>{$('timeStep').value=Math.max(0,+$('timeStep').value-5); updateTimeLabel();};
+  $('timeNext').onclick=()=>{$('timeStep').value=Math.min(100,+$('timeStep').value+5); updateTimeLabel();};
+  $('timeReset').onclick=()=>{timePlaying=false; if($('timePlay')) $('timePlay').textContent='▶ Play 4D/5D'; $('timeStep').value=0; resultsHistory=[]; updateTimeLabel();};
+  $('timePlay').onclick=()=>{
+    if(!engMode){toast('Enable 5D Engineering engine'); return;}
+    timePlaying=!timePlaying; $('timePlay').textContent=timePlaying?'⏸ Pause':'▶ Play 4D/5D';
+    if(timePlaying) toast('4D/5D playback…');
+  };
+  $('playSpeed').oninput=e=>{playSpeed=+e.target.value; $('playSpeedVal').textContent=playSpeed+'×';};
+
+  if($('exportResults')) $('exportResults').onclick=()=>{
+    if(!lastResults){toast('Run engineering step first'); return;}
+    const R=lastResults;
+    const rows=[['metric','value','unit'],['time_T',R.t,'month_eq'],['scenario',R.preset,''],['water_surface',R.flood.waterSurface,'m'],['inundation_factor',R.flood.inundation,'0-1'],['flooded_assets',R.flood.floodedAssets,'count'],['flood_damage',R.flood.damageM,'M_EUR'],['load_MW',R.energy.loadMW,'MW'],['local_gen_MW',R.energy.localGen,'MW'],['import_MW',R.energy.importUsed,'MW'],['unserved_MW',R.energy.unserved,'MW'],['energy_margin',R.energy.margin,'pct'],['renew_share',R.energy.renewShare,'pct'],['traffic_flow',R.traffic.flow,'pcu_h'],['traffic_capacity',R.traffic.capacity,'pcu_h'],['volume_capacity_ratio',R.traffic.vcr,'ratio'],['level_of_service',R.traffic.los,''],['assets_online',R.construction.onlineAssets,'count'],['capex_spent',R.cost.capexSpent,'M_EUR'],['capex_total',R.cost.capexTotal,'M_EUR'],['opex_accrued',R.cost.opexAccrued,'M_EUR'],['npv_approx',R.cost.npv,'M_EUR'],['risk_index',R.riskIndex,'0-100'],['model',R.model,'']];
+    download('sdt-5d-engineering-results.csv',rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');
+  };
+  if($('exportEngJson')) $('exportEngJson').onclick=()=>{
+    if(!lastResults){toast('Run engineering step first'); return;}
+    const payload={schema:'SDT5Dplus-engineering-results-v1',engine:ENG.version,dataset:'synthetic-calibrated',results:lastResults,history:resultsHistory,assetRegister:objects.map(o=>({id:o.userData.id,name:o.userData.name,type:o.userData.type,layer:o.userData.layer,phase:o.userData.phase,threshold_m:o.userData.threshold,capex_M:o.userData.capexM,opex_M:o.userData.opexM,load_kW:o.userData.loadKW}))};
+    download('sdt-5d-engineering-pack.json',JSON.stringify(payload,null,2),'application/json');
+  };
+  $('lighting').onchange=e=>{const v=e.target.value; if(v==='day'){scene.background.set('#9bb8c6'); scene.fog.color.set('#9bb8c6'); keyLight.intensity=3.2;} else if(v==='night'){scene.background.set('#03080f'); scene.fog.color.set('#03080f'); keyLight.intensity=.8;} else{scene.background.set('#07131e'); scene.fog.color.set('#07131e'); keyLight.intensity=2.2;}};
+  $('ambient').oninput=e=>{scene.children.filter(o=>o.isHemisphereLight).forEach(o=>o.intensity=+e.target.value);};
+  $('outline').oninput=e=>{const k=+e.target.value; objects.forEach(o=>o.material.emissiveIntensity=k);};
+  $('showAxes').onchange=e=>axes.visible=e.target.checked;
+  const compass=new THREE.Group(); const ring=new THREE.Mesh(new THREE.TorusGeometry(3,.07,8,48),new THREE.MeshBasicMaterial({color:'#6de4ff'})); ring.rotation.x=Math.PI/2; compass.add(ring);
+  const north=new THREE.Mesh(new THREE.ConeGeometry(.7,2,12),new THREE.MeshBasicMaterial({color:'#ff7188'})); north.position.set(0,1.5,-2.4); compass.add(north); compass.position.set(85,.4,-55); world.add(compass);
+  $('showCompass').onchange=e=>{compass.visible=e.target.checked;};
+  $('exportJson').onclick=()=>{
+    const data={schema:'SDT5Dplus-GIS-BIM-5D-v5',title:'SMART DISTRICT TERRITORY 5D+ — Multi-stratum Territorial OS',note:'Synthetic GIS+BIM with structured 5D engineering engine and vertical domain stack (Undercity→Deep Space).',engine:ENG.version,stratum:currentStrata,stratumMeta:STRATA[currentStrata]?{id:STRATA[currentStrata].id,name:STRATA[currentStrata].name,alt:STRATA[currentStrata].alt}:null,layers:['terrain','water','buildings','transport','utilities','labels','sim','strata'],engineeringMode:engMode,scenario:$('scenarioPreset').value,demand:+$('demand').value,stress:+$('stress').value,waterLevel:+$('waterLevel').value,discountRate:+($('discountRate')?.value||5),lastResults,objects:objects.map(o=>({id:o.userData.id,name:o.userData.name,type:o.userData.type,layer:o.userData.layer,phase:o.userData.phase,threshold_m:o.userData.threshold,capex_M:o.userData.capexM,opex_M:o.userData.opexM,load_kW:o.userData.loadKW,source:o.userData.source||'synthetic-GIS-BIM',position:o.position.toArray(),scale:o.scale.toArray(),color:'#'+o.material.color.getHexString(),audit:o.userData.audit})),timeline:+$('timeStep').value};
+    download('sdt-5d-plus-city-5d-scene.json',JSON.stringify(data,null,2),'application/json');
+  };
+  $('exportAudit').onclick=()=>{const rows=[['id','name','layer','audit_status','confidence','note'],...objects.map(o=>[o.userData.id,o.userData.name,o.userData.layer,o.userData.audit.status,o.userData.audit.confidence,o.userData.audit.note])]; download('sdt-5d-plus-audit.csv',rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv');};
+  $('importJson').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      const d=JSON.parse(await f.text()); if(!Array.isArray(d.objects)) throw Error('Missing objects array');
+      objects.slice().forEach(o=>{layers[o.userData.layer].remove(o); const sp=layers.labels.children.find(s=>s.userData.labelFor===o.userData.id); if(sp) layers.labels.remove(sp);});
+      objects.length=0; objectMap.clear(); nextId=1;
+      d.objects.forEach(o=>{const obj=addObj(o.name,o.type,o.layer,o.position,o.scale,o.color||'#438ca3'); obj.userData.id=o.id||obj.userData.id; obj.userData.audit=o.audit||obj.userData.audit; nextId=Math.max(nextId,obj.userData.id+1); labelFor(obj);});
+      $('scenarioPreset').value=d.scenario||'Baseline'; $('scenarioValue').textContent=$('scenarioPreset').value;
+      updateObjectList(); $('objectCount').textContent=objects.length;
+      setProvenance({source:'Workbench scene JSON',crs:'local',features:objects.length,fetchedAt:new Date().toISOString().slice(0,19)+'Z',license:'user import'});
+      toast('Scene JSON imported.');
+    }catch(err){toast('Import failed: '+err.message);}
+    e.target.value='';
+  };
+  if($('fetchOsm')) $('fetchOsm').onclick=async()=>{
+    try{
+      const [lat,lon,delta]=($('osmPreset').value||'51.5074,-0.1278,0.012').split(',').map(Number);
+      $('fetchOsm').disabled=true; $('fetchOsm').textContent='Loading…';
+      await fetchOSMBuildings(lat,lon,delta||0.012);
+      if(engMode) runEngineeringSim(+$('timeStep').value); openPanel('resultsPanel');
+    }catch(err){console.error(err); toast('OSM fetch failed: '+err.message);}
+    finally{$('fetchOsm').disabled=false; $('fetchOsm').textContent='Fetch OSM buildings';}
+  };
+  if($('importGeojson')) $('importGeojson').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      const gj=JSON.parse(await f.text()); clearMassing(false);
+      objects.slice().forEach(o=>{if(o.userData.layer==='buildings'){layers.buildings.remove(o); objects.splice(objects.indexOf(o),1); objectMap.delete(o.userData.id); const spr=layers.labels.children.find(s=>s.userData.labelFor===o.userData.id); if(spr) layers.labels.remove(spr);}});
+      const n=loadGeoJSONFeatures(gj,{source:'GeoJSON file: '+f.name});
+      rebuildAfterImport('GeoJSON',n);
+      setProvenance({source:'GeoJSON: '+f.name,crs:gj.crs?.properties?.name||'EPSG:4326 assumed → local',features:n,fetchedAt:new Date().toISOString().slice(0,19)+'Z',license:'user-provided',notes:['LOD1 extrusion']});
+      toast('GeoJSON: '+n+' footprints loaded');
+    }catch(err){toast('GeoJSON import failed: '+err.message);}
+    e.target.value='';
+  };
+  if($('importGltf')) $('importGltf').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      toast('Loading CAD/BIM model…');
+      const url=URL.createObjectURL(f); const loader=new GLTFLoader(); const gltf=await loader.loadAsync(url); URL.revokeObjectURL(url);
+      const root=gltf.scene||gltf.scenes?.[0]; if(!root) throw new Error('No scene in glTF');
+      const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
+      const maxDim=Math.max(size.x,size.y,size.z,0.001); const s=60/maxDim; root.scale.multiplyScalar(s);
+      box.setFromObject(root); const center=new THREE.Vector3(); box.getCenter(center); root.position.sub(center); root.position.y-=box.min.y*s;
+      let meshCount=0;
+      root.traverse(ch=>{if(ch.isMesh){ch.castShadow=true; ch.receiveShadow=true; ch.userData={id:nextId++,name:ch.name||(f.name+' mesh '+meshCount),type:'building',layer:'buildings',description:'CAD/BIM glTF mesh',audit:{status:'Not assessed',confidence:80,note:'glTF import'},baseColor:'#6aa5b8',source:'glTF/BIM: '+f.name,phase:20+meshCount%40}; ch.userData.baseScaleY=ch.scale.y||1; ch.userData.baseY=ch.position.y; objects.push(ch); objectMap.set(ch.userData.id,ch); meshCount++;}});
+      layers.buildings.add(root); rebuildAfterImport('glTF',meshCount);
+      setProvenance({source:'CAD/BIM glTF: '+f.name,crs:'model local → scene',features:meshCount,fetchedAt:new Date().toISOString().slice(0,19)+'Z',license:'user-provided',notes:['Imported via GLTFLoader']});
+      toast('CAD/BIM: '+meshCount+' meshes from '+f.name);
+      camera.position.set(70,50,80); controls.target.set(0,5,0); controls.update();
+    }catch(err){console.error(err); toast('glTF import failed: '+err.message);}
+    e.target.value='';
+  };
+
+  setProvenance({source:'synthetic demo',crs:'local scene units',features:objects.length,license:'demo'});
+  $('screenshotBtn').onclick=()=>{renderer.render(scene,camera); const a=document.createElement('a'); a.download='sdt-5d-plus-viewport.png'; a.href=renderer.domElement.toDataURL('image/png'); a.click(); toast('Viewport image captured.');};
+  $('resetScene').onclick=()=>location.reload();
+  function download(name,content,type){const blob=new Blob([content],{type}), url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); toast('Export prepared: '+name);}
+  function resize(){const r=$('viewport').getBoundingClientRect(); camera.aspect=r.width/r.height; camera.updateProjectionMatrix(); renderer.setSize(r.width,r.height,false);}
+  window.addEventListener('resize',resize);
+  $('fullscreenBtn').onclick=toggleFullscreen; $('introFullscreen').onclick=toggleFullscreen;
+  async function toggleFullscreen(){try{if(!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen();}catch(e){toast('Fullscreen is not available.');}}
+  $('enterBtn').onclick=()=>{$('intro').style.display='none'; $('scenePanel').classList.add('open'); toast('Workspace ready. Synthetic scene loaded.');};
+  $('helpBtn').onclick=()=>toast('Drag: orbit · Right-drag: pan · Scroll: zoom · Click: inspect · Side icons: tools and panels');
+  $('resetBtn').onclick=()=>{$('cameraPreset').value='overview'; camera.position.set(72,55,85); controls.target.set(15,0,0); controls.update(); toast('Camera view reset.');};
+  updateObjectList(); $('objectCount').textContent=objects.length; resize(); $('loading').style.display='none';
+  wbReady=true;
+
+  let lastTs=performance.now();
+  function animate(now){
+    requestAnimationFrame(animate);
+    if(!document.body.classList.contains('wb-mode')) return;
+    const dt=Math.min(.05,(now-lastTs)/1000); lastTs=now;
+    if(timePlaying&&engMode){
+      simClock+=dt*playSpeed*4;
+      if(simClock>=1){simClock=0; let t=+$('timeStep').value+1; if(t>100){t=0; toast('4D cycle complete — restarting T+00');} $('timeStep').value=t; updateTimeLabel();}
+    }else if(engMode&&$('simFlows').checked){runEngineeringSim(+$('timeStep').value);}
+    controls.update(); renderer.render(scene,camera);
+  }
+  animate(performance.now());
+}
+
+window.addEventListener('wb-open',()=>{if(!wbInited) initWorkbench();});
+if(location.hash==='#workbench') window.dispatchEvent(new Event('wb-open'));
+</script>
+</body>
+</html>
